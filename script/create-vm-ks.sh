@@ -1,8 +1,8 @@
 #!/bin/bash
 # Virt install time2goHam
 
-script_name="go-ham7.sh"
-usage="$script_name guest_name disk_size mac_address ram vcpus kickstart_file "
+script_name="create-vm-ks.sh"
+usage="$script_name guest_name disk_size mac_address ram vcpus kickstart_file"
 
 if [ $# -ne 6 ]
   then
