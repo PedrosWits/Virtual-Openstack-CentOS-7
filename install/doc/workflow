@@ -1,0 +1,70 @@
+#======================================================================
+#
+# 1. Startup
+#
+#======================================================================
+
+# Load files and paths
+
+# Load user-defined variables
+
+# Generate MACS and constants
+
+# Check that the necessary software - libvirt - is installed
+
+# Create data network in libvirt
+
+# Edit default data network 
+
+
+#=======================================================================
+#
+# 2. Vm Creation
+#
+#=======================================================================
+
+# Create base vm w/ kickstart
+
+# Snapshot
+
+# Prep Clone
+
+# Clone
+
+## Into Controller
+
+## Into Network
+
+## Into Compute1
+
+# Feed specific configuration script to each through ssh (ntp, ..)
+
+#======================================================================
+#
+# 3. Install Openstack
+#
+#======================================================================
+
+# Install openstack using packstack w/predefined answers-file
+
+#======================================================================
+#
+# 4. Install Rally and gather benchmarking data
+#
+#======================================================================
+
+# Install Rally
+
+# Run Rally
+
+# Show results
+
+#======================================================================
+#
+# 5. Finalize
+#
+#======================================================================
+
+# Install openstack-management scripts
+
+# Display useful messages
