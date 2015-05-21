@@ -107,7 +107,7 @@ ssh-keygen -q -t rsa -N "" -f /root/.ssh/id_rsa
 cp -p -f --context=system_u:object_r:ssh_home_t:s0 /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 # do not permit root login over ssh
-/bin/sed -i -e 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+#/bin/sed -i -e 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
 # run Aide to generate initial database
 aide -i
 # Disable NetworkManager and start network service instead

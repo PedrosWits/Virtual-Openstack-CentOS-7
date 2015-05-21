@@ -40,7 +40,7 @@ virt-install \
   --disk path=$img_path/$name.img,size=$size,bus=virtio,format=qcow2 \
   --initrd-inject=$kickstart \
   --location=http://mirror.catn.com/pub/centos/7/os/x86_64 \
-  --extra-args="ks=file:$kickstart text console=tty0 utf8 console=ttyS0,115200" \
+  --extra-args="ks=file:/$kickstart text console=tty0 utf8 console=ttyS0,115200" \
   --network network=default,mac=$mac \
   --os-type linux \
   --os-variant virtio26 \
