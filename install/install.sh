@@ -6,16 +6,62 @@
 #======================================================================
 
 # Pointer to file loader script - takes the current path as argument
-startup="config/load-tree.sh"
+config_files="src/config/file-tree.sh"
+user_config="$PWD/user.cfg"
 
-# Load file names, setup log and define helper functions
-if ! eval source "$startup $PWD"
-  then 
-    echo "Failed to run startup files. Exiting"
-    exit 1
-  else
-    log "Load file structure and setup log: $SOK"
+# Load user-defined variables
+source $user_config
+
+if [ $? -ne 0 ]; then
+  echo "Problem occured when loading user-define variables file: $user_config. Exiting.."
+  exit 1
 fi
+echo "Load user-defined variables: OK"
+
+# Load file names
+source $config_files $PWD
+
+if [ $? -ne 0 ]; then
+  echo "Problem occurred when running startup shell file: $config_files. Exiting.."
+  exit 1
+fi
+echo "Load file names and structure: OK"
+
+# Load colours
+source $utility_colours
+
+if [ $? -ne 0 ]; then
+  echo "Problem occurred when running startup shell file: $utility_colours. Exiting.."
+  exit 1
+fi
+echo "Load colours: OK"
+
+# Define log functions
+source $config_log $logfile $log_colour
+
+if [ $? -ne 0 ]; then
+  echo "Problem occurred when running startup shell file $config_log. Exiting.."
+  exit 1
+fi
+echo "Load log-functions: OK"
+
+# Setup log - open log
+logsetup
+
+if [ $? -ne 0 ]; then
+  echo "Problem occurred when setting up log with function: logsetup. Exiting.."
+  exit 1
+fi
+echo "Setup log: OK"
+
+# Define functions runCommand, try, yell
+source $utility_helpers
+
+if [ $? -ne 0 ]; then
+  echo "Problem occurred when running startup shell file: $utility_helpers. Exiting.."
+  exit 1
+fi
+echo "Load utility functions: OK"
 
 ### We use try(runCommand (command, log_message)) from now on
 log "#==================================================================#"
@@ -25,9 +71,6 @@ log "Log opened at $(date)"
 log "#                                                                  #"
 log "#==================================================================#"
 
-# Load user-defined variables
-try runCommand "source $user_config" "Read user defined variables"
-
 #======================================================================
 #
 # 1. Libvirt
@@ -35,7 +78,7 @@ try runCommand "source $user_config" "Read user defined variables"
 #======================================================================
 
 # Generate MACS and constants
-try runCommand "source $sh_gen_const $sh_macgen_kvm" "Generate MACS"
+try runCommand "source $config_constants $utility_macgen" "Generate MACS"
 
 # Check that the necessary software - libvirt - is installed
 
@@ -119,7 +162,14 @@ try runCommand "virsh -c $kvm_uri net-destroy default && virsh -c $kvm_uri net-s
 # Create base vm w/ kickstart
 log "Creating base vm..."
 
-try runCommand "source $sh_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $ks_generic_centos7 $kvm_uri $img_disk_path" "Create Base vm"
+#echo "command = $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path"
+
+try runCommand "source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path" "Create Base vm"
+
+if [ $result -eq 1 ]; then
+  exit 1
+fi
+
 
 # Snapshot
 try runCommand "virsh -c $kvm_uri snapshot-create-as $vm_base_name fresh_install \"Centos 7 Base VM\" --atomic --reuse-external" "$vm_base_name - Create snapshot fresh install"
@@ -131,22 +181,22 @@ try runCommand "sudo virt-sysprep -c $kvm_uri -d $vm_base_name" "Prepare base VM
 
 ## Into Controller
 log "Cloning base vm into controller vm..."
-try runCommand "source $sh_clone_vm $vm_base_name $vm_controller_name $mac_controller_default $kvm_uri $img_disk_path" "Clone into controller - $vm_controller_name"
+try runCommand "source $virt_clone_vm $vm_base_name $vm_controller_name $mac_controller_default $kvm_uri $img_disk_path" "Clone into controller - $vm_controller_name"
 
 ## Into Network
 log "Cloning base vm into network vm..."
-try runCommand "source $sh_clone_vm $vm_base_name $vm_network_name $mac_network_default $kvm_uri $img_disk_path" "Clone into network - $vm_network_name"
+try runCommand "source $virt_clone_vm $vm_base_name $vm_network_name $mac_network_default $kvm_uri $img_disk_path" "Clone into network - $vm_network_name"
 
 ## Into Compute1
 log "Cloning base vm into compute1 vm..."
-try runCommand "source $sh_clone_vm $vm_base_name $vm_compute1_name $mac_compute1_default $kvm_uri $img_disk_path" "Clone into compute1 - $vm_compute1_name"
+try runCommand "source $virt_clone_vm $vm_base_name $vm_compute1_name $mac_compute1_default $kvm_uri $img_disk_path" "Clone into compute1 - $vm_compute1_name"
 
 # Add NICS of data network to network and compute1
 ## Add NIC 2 to network node
-try runCommand "source $sh_add_nic $vm_network_name $data_network_name $mac_network_data"
+try runCommand "source $virt_add_nic $vm_network_name $data_network_name $mac_network_data"
 
 ## Add NIC 2 to compute1 node
-try runCommand "source $sh_add_nice $vm_compute1_name $data_network_name $mac_compute1_data"
+try runCommand "source $virt_add_nice $vm_compute1_name $data_network_name $mac_compute1_data"
 
 # Start Domains
 try runCommand "virsh -c $kvm_uri start $vm_controller_name"

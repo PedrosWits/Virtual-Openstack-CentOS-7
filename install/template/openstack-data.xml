@@ -4,8 +4,8 @@
   <ip address='10.0.0.1' netmask='255.255.255.0'>
      <dhcp>
  	  <range start='10.0.0.2' end='10.0.0.254'/>
-	<host mac='52:54:00:B0:A0:4D' name='centos7-network' ip='10.0.0.21'/>
-	<host mac='52:54:00:17:98:ED' name='centos7-compute1' ip='10.0.0.31'/>
+	<host mac='52:54:00:67:76:8E' name='centos7-network' ip='10.0.0.21'/>
+	<host mac='52:54:00:13:A1:24' name='centos7-compute1' ip='10.0.0.31'/>
      </dhcp>
   </ip>
 </network>
