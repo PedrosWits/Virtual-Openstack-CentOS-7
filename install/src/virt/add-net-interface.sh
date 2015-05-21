@@ -19,4 +19,5 @@ virsh attach-interface \
   --type network \
   --source $network \
   --mac $mac \
-  --config
+  --config \
+  --live

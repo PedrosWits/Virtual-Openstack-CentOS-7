@@ -23,7 +23,7 @@ enable ntp"
 
 if [ $configure_as_master -eq 1 ]
   then
-    sudo echo -e $ntp_controller_string > /tmp/ntp.conf
+    echo -e $ntp_controller_string > /etc/ntp.conf
   else 
-    sudo echo -e $ntp_slave_string > /tmp/ntp.conf
+    echo -e $ntp_slave_string > /etc/ntp.conf
 fi

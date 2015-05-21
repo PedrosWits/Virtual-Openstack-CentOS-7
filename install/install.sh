@@ -196,7 +196,7 @@ try runCommand "source $virt_clone_vm $vm_base_name $vm_compute1_name $mac_compu
 try runCommand "source $virt_add_nic $vm_network_name $data_network_name $mac_network_data"
 
 ## Add NIC 2 to compute1 node
-try runCommand "source $virt_add_nice $vm_compute1_name $data_network_name $mac_compute1_data"
+try runCommand "source $virt_add_nic $vm_compute1_name $data_network_name $mac_compute1_data"
 
 # Start Domains
 try runCommand "virsh -c $kvm_uri start $vm_controller_name"
