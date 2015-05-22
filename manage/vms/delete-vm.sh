@@ -12,7 +12,7 @@ kvm_uri="qemu:///system"
 virsh -c $kvm_uri destroy $domain
 
 # Undefine domain
-virsh -c $kvm_uri undefine $domain
+virsh -c $kvm_uri undefine $domain --remove-all-storage --wipe-storage --snapshots-metadata --nvram
 
 # Delete img file
-virsh -c $kvm_uri vol-delete $domain.img --pool default
+#virsh -c $kvm_uri vol-delete $domain.img --pool default
