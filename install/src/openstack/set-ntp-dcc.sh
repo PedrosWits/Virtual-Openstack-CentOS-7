@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ "$#" -lt 1 ]; then
+  exit 1
+fi
+
 configure_as_master=$1
 ip_master=$2
 

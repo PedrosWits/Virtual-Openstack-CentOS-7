@@ -267,9 +267,9 @@ try runCommand "ssh-add ~/.ssh/$ssh_key_name" "Add generated ssh-key to ssh-agen
 ## On Network node
 try runCommand "ssh root@$vm_network_ip_eth0 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1" "Network VM - create ifcfg-eth1"
 
-try runCommand "ssh root@$vm_network_ip_eth0 'sed -i \"s:HWADDR=*:HWADDR=$mac_network_data:\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Network VM - edit ifcfg-eth1, field HWADDR"
+try runCommand "ssh root@$vm_network_ip_eth0 'sed -i \"s|HWADDR=.*|HWADDR=$mac_network_data|\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Network VM - edit ifcfg-eth1, field HWADDR"
 
-try runCommand "ssh root@$vm_network_ip_eth0 'sed -i \"s:eth0:eth1:\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Network VM - edit ifcfg-eth1, field NAME"
+try runCommand "ssh root@$vm_network_ip_eth0 'sed -i \"s|eth0|eth1|\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Network VM - edit ifcfg-eth1, field NAME"
 
 try runCommand "ssh root@$vm_network_ip_eth0 'sed -i \"/UUID/d\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Network VM - edit ifcfg-eth1, remove UUID"
 
@@ -279,9 +279,9 @@ try runCommand "ssh root@$vm_network_ip_eth0 'ifup eth1'" "Network VM - bring in
 
 try runCommand "ssh root@$vm_compute1_ip_eth0 'cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1" "Compute1 VM - create ifcfg-eth1"
 
-try runCommand "ssh root@$vm_compute1_ip_eth0 'sed -i \"s:HWADDR=*:HWADDR=$mac_compute1_data:\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Compute1 VM - edit ifcfg-eth1, field HWADDR"
+try runCommand "ssh root@$vm_compute1_ip_eth0 'sed -i \"s|HWADDR=.*|HWADDR=$mac_compute1_data|\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Compute1 VM - edit ifcfg-eth1, field HWADDR"
 
-try runCommand "ssh root@$vm_compute1_ip_eth0 'sed -i \"s:eth0:eth1:\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Compute1 VM - edit ifcfg-eth1, field NAME"
+try runCommand "ssh root@$vm_compute1_ip_eth0 'sed -i \"s|eth0|eth1|\" /etc/sysconfig/network-scripts/ifcfg-eth1'" "Compute1 VM - edit ifcfg-eth1, field NAME"
 
 try runCommand "ssh root@$vm_compute1_ip_eth0 'sed -i \"/UUID/d\" /etc/sysconfig/network-scripts/ifcfg-eth1'"  "Compute1 VM - edit ifcfg-eth1, remove UUID"
 
@@ -298,13 +298,19 @@ try runCommand "virsh -c $kvm_uri snapshot-create-as $vm_compute1_name fresh_clo
 # Configure ntp in openstack vms, controller - master, rest - slaves
 
 ##Controller
-#try runCommand "ssh $root@vm_controller_ip_eth0 'bash -s' < $os_set_ntp 1" "Controller VM - Configure ntp"
+try runCommand "ssh root@$vm_controller_ip_eth0 'bash -s' < $os_set_ntp 1" "Controller VM - Configure ntp"
+try runCommand "ssh root@$vm_controller_ip_eth0 'systemctl enable ntpd.service'" "Controller VM - Enable ntpd.service"
+try runCommand "ssh root@$vm_controller_ip_eth0 'systemctl start ntpd.service'" "Controller VM - Start ntpd.service"
 
 ##Network
-#try runCommand  "ssh $root@vm_network_ip_eth0 'bash -s' < $os_set_ntp 0 $vm_controller_ip_eth0" "Network VM - Configure ntp"
+try runCommand "ssh root@$vm_network_ip_eth0 'bash -s' < $os_set_ntp 0 $vm_controller_ip_eth0" "Network VM - Configure ntp"
+try runCommand "ssh root@$vm_network_ip_eth0 'systemctl enable ntpd.service'" "Network VM - Enable ntpd.service"
+try runCommand "ssh root@$vm_network_ip_eth0 'systemctl start ntpd.service'" "Network VM - Start ntpd.service"
 
 ##Compute1
-#try runCommand  "ssh $root@vm_compute1_ip_eth0 'bash -s' < $os_set_ntp 0 $vm_controller_ip_eth0" "Compute1 VM - Configure ntp"
+try runCommand "ssh root@$vm_compute1_ip_eth0 'bash -s' < $os_set_ntp 0 $vm_controller_ip_eth0" "Compute1 VM - Configure ntp"
+try runCommand "ssh root@$vm_compute1_ip_eth0 'systemctl enable ntpd.service'" "Compute1 VM - Enable ntpd.service"
+try runCommand "ssh root@$vm_compute1_ip_eth0 'systemctl start ntpd.service'" "Compute1 VM - Start ntpd.service"
 
 
 #======================================================================
@@ -315,8 +321,9 @@ try runCommand "virsh -c $kvm_uri snapshot-create-as $vm_compute1_name fresh_clo
 #user="admin"
 
 # Install openstack using packstack w/predefined answers-file
-#try runCommand "ssh $user@192.168.122.11 'sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm'"
-#try runCommand "ssh $user@192.168.122.11 'packstack --allinone'"
+try runCommand "ssh root@$vm_controller_ip_eth0 'yum install -y https://rdoproject.org/repos/rdo-release.rpm'" "Controller VM - Install rdo repository"
+try runCommand "ssh root@$vm_controller_ip_eth0 'yum install -y openstack-packstack'" "Controller VM - Install packstack packages"
+try runCommand "ssh root@$vm_controller_ip_eth0 'packstack --allinone'" "Controller VM - Use packstack to deploy Openstack"
 
 
 #======================================================================
