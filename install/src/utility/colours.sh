@@ -30,9 +30,3 @@ BPurple='\e[1;35m'      # Purple
 BCyan='\e[1;36m'        # Cyan
 BWhite='\e[1;37m'       # White
 
-#--------------------------------------------#
-#
-# Status strings
-#--------------------------------------------#
-SOK=$Green"OK"$Color_Off
-SFAILED=$Red"FAILED"$Color_Off

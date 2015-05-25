@@ -107,7 +107,14 @@ ssh-keygen -q -t rsa -N "" -f /root/.ssh/id_rsa
 cp -p -f --context=system_u:object_r:ssh_home_t:s0 /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 chmod 600 /root/.ssh/authorized_keys
 # do not permit root login over ssh
-#/bin/sed -i -e 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+/bin/sed -i -e 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+# Members of the wheel group are not required to input passwd to run priveleged commands -> user admin belongs to wheel
+# Comment existing config - which usually is '%wheel ALL=(ALL) ALL'
+/bin/sed -i 's/^%wheel/^#%wheel/g' /etc/sudoers
+echo "%wheel   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers
+# Remove the requiretty clause as it does not provides a very impactful security feature
+# Ref: http://unix.stackexchange.com/questions/122616/why-do-i-need-a-tty-to-run-sudo-if-i-can-sudo-without-a-password
+/bin/sed -i 's/requiretyy/!requiretty/' /etc/sudoers
 # run Aide to generate initial database
 aide -i
 # Disable NetworkManager and start network service instead
