@@ -27,14 +27,21 @@ function ok {
 
 # Clean_up function
 function cleanup {
-   echo -e -n "$SFAILED\n"
+   if [ "$?" -eq 0 ]; then
+   	echo -e -n "\n$log_tag \e[0;32mInstallation successful!\e[0m\n"
+      else
+     	echo -e -n "$SFAILED\n"
+	echo -e -n "\n$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up..\n"
+   fi
+
    case $checkpoint in 
 	0)  ;;
 	1)  ;;
       	2)  ;;
-        *) echo "Something went wrong - checkpoint out of depth!"
+        3)  ;;
+	*) echo "Something went wrong - checkpoint out of depth!"
    esac
-   
+   echo ""
 }
 # Define trap
 trap cleanup EXIT SIGHUP SIGINT SIGTERM
@@ -43,6 +50,7 @@ trap cleanup EXIT SIGHUP SIGINT SIGTERM
 config_files="src/config/file-tree.sh"
 user_config="$PWD/user.cfg"
 
+echo ""
 log "$prog_name starting on $(date).\n"
 echo -e "$log_tag #==================================================================#"
 # Load user-defined variables
@@ -55,7 +63,6 @@ log "Load file names and structure.. "
 source $config_files $PWD 
 ok
 
-exit 0
 #======================================================================
 #
 # 1. Libvirt
@@ -283,6 +290,12 @@ ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo sed -i \"/UUID/d\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
 ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+"echo 'UUID=\"$(uuidgen)\"' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+
+ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+"echo 'DNS1=$management_network_ip' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+
+ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo ifup eth1"
 
 ok
@@ -302,7 +315,28 @@ ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo sed -i \"/UUID/d\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
 ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+"echo 'UUID=\"$(uuidgen)\"' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+
+ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+"echo 'DNS1=$management_network_ip' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+
+ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo ifup eth1"
+
+ok
+
+# Confirm that the VMs have internet connection and can ping each other
+
+log "Verify that VMs have internet connection.. "
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"ping -c 2 www.google.com"
+
+ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+"ping -c 2 www.google.com"
+
+ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+"ping -c 2 www.google.com"
 
 ok
 
@@ -371,8 +405,8 @@ ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y openstack-utils"
 ok
 
-# Generate the answers-file
-ANSWERS_FILE="packstack_answers.conf"
+# Generate the answers-file with unix timestamp
+ANSWERS_FILE="packstack_answers$(date +%s).conf"
 
 log "Generate the answers file using packstack.. "
 
@@ -381,17 +415,42 @@ ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 
 ok
 
-# All in one installation at first
-#log "Running packstack allinone installation - this may take a while.."
-#try runCommand "ssh root@$vm_controller_ip_eth0 'packstack --allinone'" "Controller VM - Use packstack to deploy Openstack"
+# Edit answers file using openstack-config
 
-# Get packstack-answers file and modify it to include the remaining hosts
-#local name_packstack_file
-#try runCommand "name_packstack_file=$(ssh root@$vm_controller_ip_eth0 'find /home | grep packstack-answers')" "Get packstack-answers file"
+log "Edit answers file according to our configuration: vms ips, ntp servers, etc.. "
 
-# Modify with sed
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NTP_SERVERS $ntp_servers_list"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG__COMPUTE_HOSTS $vm_compute1_ip_eth0"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NETWORK_HOSTS $vm_network_ip_eth0"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
+
+ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general"
 
 
+ok
 
 # Re run packstack
 log "Running packstack with configured values - this may take a while.. "

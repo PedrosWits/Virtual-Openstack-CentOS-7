@@ -10,13 +10,9 @@ ip_master=$2
 ntp_slave_string="server $ip_master iburst"
 
 ntp_controller_string="
-server ntp iburst\n
 server ntp01.fccn.pt iburst\n
 server ntp02.fccn.pt iburst\n
 \n
-restrict −4 default kod notrap nomodify\n
-restrict −6 default kod notrap nomodify\n
-\n 
 driftfile /etc/ntp/drift\n 
 broadcastdelay 0.008\n
 authenticate no\n
