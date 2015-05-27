@@ -13,8 +13,8 @@ checkpoint=0
 set -e
 
 # OK, FAILED STRINGS
-SOK="\e[0;34mOK\e[0m"
-SFAILED="\e[031;mFAILED\e[0m"
+SOK="\e[0;32m[OK]\e[0m"
+SFAILED="\e[0;31m[FAILED]\e[0m"
 
 # Log function
 log_tag="\e[0;36m[$prog_name]\e[0m"
@@ -22,12 +22,12 @@ function log {
   echo -n -e "$log_tag $*"
 }
 function ok {
-  log "$SOK\n"
+   echo -e -n "$SOK\n"
 }
 
 # Clean_up function
 function cleanup {
-   log "$SFAILED\n"
+   echo -e -n "$SFAILED\n"
    case $checkpoint in 
 	0)  ;;
 	1)  ;;
@@ -37,14 +37,14 @@ function cleanup {
    
 }
 # Define trap
-trap cleanup SIGHUP SIGINT SIGTERM
+trap cleanup EXIT SIGHUP SIGINT SIGTERM
 
 # Pointer to file loader script - takes the current path as argument
 config_files="src/config/file-tree.sh"
 user_config="$PWD/user.cfg"
 
-log "$prog_name starting on $date.\n"
-
+log "$prog_name starting on $(date).\n"
+echo -e "$log_tag #==================================================================#"
 # Load user-defined variables
 log "Load variables from user-editable file - $user_config.. "
 source $user_config
@@ -52,10 +52,10 @@ ok
 
 # Load file names
 log "Load file names and structure.. "
-source $config_files $PWD
+source $config_files $PWD 
 ok
 
-
+exit 0
 #======================================================================
 #
 # 1. Libvirt
@@ -154,7 +154,8 @@ ok
 
 # Snapshot
 log "$vm_base_name - Create snapshot fresh install.. "
-virsh -c $kvm_uri snapshot-create-as $vm_base_name fresh_install \"Centos 7 Base VM\" --atomic --reuse-external
+virsh -c $kvm_uri snapshot-create-as $vm_base_name fresh_install "Centos 7 Base VM" \
+--atomic --reuse-external
 ok
 
 # Prep Clone
@@ -236,14 +237,16 @@ fi
 ok
 
 # Create local ~/.ssh/config if not exists and add the option 'StrictHostKeyChecking no' to force first-time ssh inyes/no question to be automatically answered
-log "Create ssh config file with option StrictHostKeyChecking=no.. "
-echo 'StrictHostKeyChecking no >> ~/.ssh/config'
+log "Add VMs to the list of known_hosts, by using key-scan.. "
+ssh-keyscan -t rsa,dsa $vm_controller_ip_eth0 >> ~/.ssh/known_hosts
+ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts
+ssh-keyscan -t rsa,dsa $vm_compute1_ip_eth0 >> ~/.ssh/known_hosts
 ok
 
 # Copy key into servers - use same key, no need for different keys - virtual environment thus this is
 # the single point of access to it
 # Keys for root access
-log "Install the keys on the VMs.. "
+log "Install the keys onto the VMs.. "
 ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_controller_ip_eth0
 ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_network_ip_eth0
 ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_compute1_ip_eth0
@@ -258,9 +261,9 @@ ok
 # use timeout in ssh - if it fails then we gotta exit - delete all vms? 
 
 log "Check if ssh-configuration was successfull.. "
-ssh -o ConnectionTimeout=10 -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 'exit'
-ssh -o ConnectionTimeout=10 -o BatchMode=yes $vm_user@$vm_network_ip_eth0 'exit'
-ssh -o ConnectionTimeout=10 -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 'exit'
+ssh -o ConnectionTimeout=5 -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 'exit'
+ssh -o ConnectionTimeout=5 -o BatchMode=yes $vm_user@$vm_network_ip_eth0 'exit'
+ssh -o ConnectionTimeout=5 -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 'exit'
 ok
 
 # Configure eth1 on network and compute1 nodes
