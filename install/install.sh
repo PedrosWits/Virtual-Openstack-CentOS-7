@@ -83,8 +83,13 @@ ok
 
 # Create data network in libvirt
 # if given network exists exit
+RESULT=0
+
 log "Test if name '$data_network_name' for data network is available.. "
-virsh -c $kvm_uri net-info $data_network_name
+virsh -c $kvm_uri net-info $data_network_name &> /dev/null && RESULT=1 || true 
+if [ $RESULT -eq 1 ]; then
+  exit 1
+fi
 ok
 
 #
@@ -214,9 +219,9 @@ ok
 # Add NICS of data network to network and compute1
 log "Adding network-interfaces for $network_data_name network in network and compute1 nodes.."
 ## Add NIC 2 to network node
-source $virt_add_nic $vm_network_name $data_network_name $mac_network_data
+source $virt_add_nic $vm_network_name $data_network_name $mac_network_data $kvm_uri
 ## Add NIC 2 to compute1 node
-source $virt_add_nic $vm_compute1_name $data_network_name $mac_compute1_data
+source $virt_add_nic $vm_compute1_name $data_network_name $mac_compute1_data $kvm_uri
 ok
 
 # Start Domains
@@ -391,7 +396,7 @@ ok
 # 3. Install Openstack
 #
 #======================================================================
-
+checkpoint=3
 # Rdo repository
 log "Installing packstack on the Controller VM.. "
 
@@ -405,6 +410,7 @@ ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y openstack-utils"
 ok
 
+exit 0
 # Generate the answers-file with unix timestamp
 ANSWERS_FILE="packstack_answers$(date +%s).conf"
 
@@ -419,8 +425,8 @@ ok
 
 log "Edit answers file according to our configuration: vms ips, ntp servers, etc.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NTP_SERVERS $ntp_servers_list"
+#ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+#"openstack-config --set $ANSWERS_FILE general CONFIG_NTP_SERVERS $ntp_servers_list"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG__COMPUTE_HOSTS $vm_compute1_ip_eth0"
@@ -429,26 +435,22 @@ ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NETWORK_HOSTS $vm_network_ip_eth0"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_TUNNEL_ID_RANGES 1001:2000"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VXLAN_GROUP 239.1.1.2"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VNI_RANGES 1001:2000"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS physnet1:br-ex"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_RANGES 1001:2000"
 
 ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
-
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general"
-
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF=eth1"
 
 ok
 
