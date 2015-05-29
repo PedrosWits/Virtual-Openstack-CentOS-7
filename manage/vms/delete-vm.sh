@@ -6,7 +6,7 @@
 
 
 domain=$1
-kvm_uri="qemu:///system"
+kvm_uri=$2
 
 # Destory domain (stop if running)
 virsh -c $kvm_uri destroy $domain

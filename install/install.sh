@@ -4,6 +4,9 @@
 # 0. Startup
 #
 #======================================================================
+# Input args
+SKIP_VM_CREATION=1
+
 # Prog Name
 prog_name="Centos7 Virtual Openstack"
 # Checkpoint variable for cleanup function
@@ -24,27 +27,18 @@ function log {
 function ok {
    echo -e -n "$SOK\n"
 }
-
-# Clean_up function
-function cleanup {
-   if [ "$?" -eq 0 ]; then
-   	echo -e -n "\n$log_tag \e[0;32mInstallation successful!\e[0m\n"
-      else
-     	echo -e -n "$SFAILED\n"
-	echo -e -n "\n$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up..\n"
-   fi
-
-   case $checkpoint in 
-	0)  ;;
-	1)  ;;
-      	2)  ;;
-        3)  ;;
-	*) echo "Something went wrong - checkpoint out of depth!"
-   esac
-   echo ""
+# Function prompt yes no question
+function promptyn {
+  for j in 1 2 3; do
+      read -t 5 -p "$1 [y/n]: "
+      case $yn in
+          [Yy]* ) return 0;;
+          [Nn]* ) return 1;;
+          * ) echo "Please answer yes or no.";;
+      esac
+  done
+  return 1
 }
-# Define trap
-trap cleanup EXIT SIGHUP SIGINT SIGTERM
 
 # Pointer to file loader script - takes the current path as argument
 config_files="src/config/file-tree.sh"
@@ -60,10 +54,37 @@ ok
 
 # Load file names
 log "Load file names and structure.. "
-source $config_files $PWD 
+source $config_files $(pwd -P)
 ok
 
-#======================================================================
+data_network_file="$(pwd -P)/openstack_data_network.xml"
+# Clean_up function - can only be defined after loading file names and user variables
+function cleanup {
+   if [ "$?" -eq 0 ]; then
+   	   echo -e -n "\n$log_tag \e[0;32mInstallation successful!\e[0m\n"
+   else
+     	   echo -e -n "$SFAILED\n"
+	   echo -e -n "\n$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up..\n"
+	   # Reset default-net, delete data-net.
+	   if [ $checkpoint -ge 1 ]; then
+		    rm -f $data_network_file
+                    source $manage_vms_reset_default $kvm_uri
+                    source $manage_vms_delete_net $data_network_name $kvm_uri
+	   fi
+	   # Delete vms created
+	   if [ $checkpoint -ge 2 ]; then
+		    source $manage_vms_delete_vm $vm_controller_name $kvm_uri
+                    source $manage_vms_delete_vm $vm_network_name $kvm_uri
+                    source $manage_vms_delete_vm $vm_compute1_name $kvm_uri
+	   fi
+   fi
+   # Line on stdout
+   echo ""
+}
+# Define trap
+trap cleanup EXIT SIGHUP SIGINT SIGTERM
+
+#=====================================================================
 #
 # 1. Libvirt
 #
@@ -75,11 +96,11 @@ log "Generate MACs.. "
 source $config_constants $utility_macgen
 ok
 
-# Check that the necessary software - libvirt - is installed
-#
-# CODE NEEDED HERE
-#
-#
+log "Check if required software is installed.. "
+
+
+
+ok
 
 # Create data network in libvirt
 # if given network exists exit
@@ -92,40 +113,39 @@ if [ $RESULT -eq 1 ]; then
 fi
 ok
 
-#
-# CODE REMAKE NEEDED STARTING HERE
-#
+log "Creating temporary file $data_network_file, for creating data network through xml template.. "
+touch $data_network_file
+cat $xml_data_network | tee --append $data_network_file
+ok
 
-# Put in xml file the variables
+log "Prepare xml file for creating isolated data network .. "
+
 ## Edit the name
-log "Edit data network xml file - network name.. "
-sed -i "s|<name>.*|<name>$data_network_name</name>|" $xml_data_network
-ok
-
+sed -i "s|<name>.*|<name>$data_network_name</name>|" $data_network_file
+## Edit the bridge's name
+sed -i "s|<bridge.*|<bridge name='$data_bridge_name'/>|" $data_network_file
+## Edit the ip address
+sed -i "s|<ip address.*|<ip address='$data_network_ip' netmask='255.255.255.0'>|" $data_network_file
+## Edit the dhcp range start-end
+sed -i "s|<range.*|<range start='$data_network_ip_start' end='$data_network_ip_end'/>|" $data_network_file
 ## Edit the ip for network node
-log "Edit data network xml file, add mac and name - network.. "
-sed -i "s|.*ip='10.0.0.21'|<host mac='$mac_network_data' name='$vm_network_name' ip='10.0.0.21'|" $xml_data_network
-ok
-
+sed -i "/range start/a <host mac='$mac_network_data' name='$vm_network_name' ip='$vm_network_ip_eth1'/>" $data_network_file
 ## Edit the ip for the compute1 node
-log "Edit data network xml file, add mac and name - compute1.. "
-sed -i "s|.*ip='10.0.0.31'|\t<host mac='$mac_compute1_data' name='$vm_compute1_name' ip='10.0.0.31'|" $xml_data_network
+sed -i "/range start/a <host mac='$mac_compute1_data' name='$vm_compute1_name' ip='$vm_compute1_ip_eth1'/>" $data_network_file
+
 ok
 
 ## Create and start the network
-log "Create network $data_network_name.. "
-virsh -c $kvm_uri net-define $xml_data_network
-ok
-
-log "Start network $data_network_name.. "
+log "Create and start the network $data_network_name.. "
+virsh -c $kvm_uri net-define $data_network_file
 virsh -c $kvm_uri net-start $data_network_name
-ok
-
-log "Add data network to autostart.. "
 virsh -c $kvm_uri net-autostart $data_network_name
 ok
 
-# Reset template
+# Check if ips are available in net-default through net-dumpxml
+log "Check if the requested IPs are available for the default network.. "
+virsh -c $kvm_uri net-dumpxml default | grep -w -v -q "$vm_controller_ip_eth0\|$vm_network_ip_eth0\|$vm_compute1_ip_eth0"
+ok
 
 # Edit default network 
 ## The Ip for the controller
@@ -140,18 +160,15 @@ ok
 
 # The Ip for the compute1
 log "Edit network default - add compute1 ip.. "
-EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_compute1_default' name='$vm_compute1_name' ip='$vm_network_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default
+EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_compute1_default' name='$vm_compute1_name' ip='$vm_compute1_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default
 ok
-
-#
-# CODE REMAKE NEEDED ENDING HERE
-#
 
 # Restart the network default
 log "Restart network default.. "
 virsh -c $kvm_uri net-destroy default && virsh -c $kvm_uri net-start default
 ok
 
+exit -1
 #=======================================================================
 #
 # 2. Vm Creation
@@ -160,23 +177,25 @@ ok
 checkpoint=2
 
 # Create base vm w/ kickstart
-log "Creating base vm - this may take a while... "
-source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path
-ok
+if [ $SKIP_VM_CREATION -eq 0 ]; then
+	log "Creating base vm - this may take a while... "
+	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path
+	ok
 
-# Snapshot
-log "$vm_base_name - Create snapshot fresh install.. "
-virsh -c $kvm_uri snapshot-create-as $vm_base_name fresh_install "Centos 7 Base VM" \
---atomic --reuse-external
-ok
+	# Snapshot
+	log "$vm_base_name - Create snapshot fresh install.. "
+	virsh -c $kvm_uri snapshot-create-as $vm_base_name fresh_install "Centos 7 Base VM" \
+	--atomic --reuse-external
+	ok
 
-# Prep Clone
-log "Prepare base VM for cloning - virt-sysprep.. "
+	# Prep Clone
+	log "Prepare base VM for cloning - virt-sysprep.. "
+	sudo virt-sysprep -c $kvm_uri -d $vm_base_name \
+	--firstboot-command "echo 'HWADDR=' | cat - /sys/class/net/eth0/address | tr -d '\n' | sed 'a\\' >> /etc/sysconfig/network-scripts/ifcfg-eth0"
+	ok
+fi
 
-sudo virt-sysprep -c $kvm_uri -d $vm_base_name \
---firstboot-command "echo 'HWADDR=' | cat - /sys/class/net/eth0/address | tr -d '\n' | sed 'a\\' >> /etc/sysconfig/network-scripts/ifcfg-eth0"
 
-ok
 # Clone
 
 ## Into Controller
@@ -202,8 +221,9 @@ virsh -c $kvm_uri start $vm_compute1_name
 ok
 
 # Wait for Domains to start - 10 seconds
-sleep 10
-log "Waiting 10 seconds for vms to start safely.."
+log "Waiting 30 seconds for vms to start and perform first-boot script safely.."
+sleep 30
+ok
 
 # Shutdown
 log "Shutting down VMs for offline network configuration.. "
@@ -212,8 +232,8 @@ virsh -c $kvm_uri shutdown $vm_network_name
 virsh -c $kvm_uri shutdown $vm_compute1_name
 ok
 
-log "Waiting 10 seconds for vms to shutdown safely.."
-sleep 10
+log "Waiting 30 seconds for vms to shutdown safely.."
+sleep 30
 ok
 
 # Add NICS of data network to network and compute1
@@ -226,14 +246,14 @@ ok
 
 # Start Domains
 log "Re-starting the VMs.. "
-try runCommand "virsh -c $kvm_uri start $vm_controller_name" "Start Controller VM - Load eth0"
-try runCommand "virsh -c $kvm_uri start $vm_network_name" "Start Network VM - Load eth0 and configure eth1"
-try runCommand "virsh -c $kvm_uri start $vm_compute1_name" "Start Compute1 VM - Load eth0 and configure eth1"
+virsh -c $kvm_uri start $vm_controller_name
+virsh -c $kvm_uri start $vm_network_name
+virsh -c $kvm_uri start $vm_compute1_name
 ok
 
 # Wait for Domains to start - 10 seconds
-log "Waiting 10 seconds for vms to shutdown safely.."
-sleep 10
+log "Waiting 30 seconds for vms to start safely.."
+sleep 30
 ok
 
 # Now I can run commands remotely on the VMs using ssh
@@ -241,14 +261,43 @@ ok
 ##  Do not create it if it exists already
 
 log "Generate ssh key for accessing the VMs automatically.. "
-if [ ! -f ~/.ssh/$ssh_key_name ]; then
+if [ -f ~/.ssh/$ssh_key_name ]; then
   log "A ssh key with the name '$ssh_key_name' already exists. Using the existing one.. "
 else
-  ssh-keygen -t rsa -N \"\" -f $ssh_key_name
+  ssh-keygen -t rsa -N "" -f $ssh_key_name
 fi
 ok
 
-# Create local ~/.ssh/config if not exists and add the option 'StrictHostKeyChecking no' to force first-time ssh inyes/no question to be automatically answered
+# Add vms' fingerprints to the list of known hosts if they are not there already
+RESULT=0
+log "Test if given Ips are available in the list of known_hosts.. "
+if [ ! -f ~/.ssh/known_hosts ]; then
+   mkdir -p ~/.ssh/known_hosts
+else 
+  for i in 1 2 3; do
+        case $i in
+	  1) hosti=$vm_controller_ip_eth0;;
+	  2) hosti=$vm_network_ip_eth0;;
+	  3) hosti=$vm_compute1_ip_eth0;;
+	  *) echo "NEVER REACHED"; exit 1;;
+	esac
+	# Find hosti in known_hosts
+	ssh-keygen -F $hosti && RESULT=1 || true 
+	  #Result=1 if found
+	  if [ $RESULT -eq 1 ]; then
+	     #Ask user if he wants to erase value if found. If no response exit automatically.
+	     echo ""
+	     if promptyn "Hostname $hosti exists in known_hosts. Do you wish to erase it and continue?"; then
+    	   	 # Erase the value from known_hosts
+		 ssh-keygen -R $hosti
+             else
+		exit 1
+             fi
+  	  fi
+  done 
+fi
+ok
+
 log "Add VMs to the list of known_hosts, by using key-scan.. "
 ssh-keyscan -t rsa,dsa $vm_controller_ip_eth0 >> ~/.ssh/known_hosts
 ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts
@@ -410,7 +459,7 @@ ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y openstack-utils"
 ok
 
-exit 0
+
 # Generate the answers-file with unix timestamp
 ANSWERS_FILE="packstack_answers$(date +%s).conf"
 
@@ -454,6 +503,7 @@ ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 
 ok
 
+exit 0
 # Re run packstack
 log "Running packstack with configured values - this may take a while.. "
 

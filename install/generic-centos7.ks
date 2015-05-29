@@ -110,7 +110,7 @@ chmod 600 /root/.ssh/authorized_keys
 /bin/sed -i -e 's/#PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
 # Members of the wheel group are not required to input passwd to run priveleged commands -> user admin belongs to wheel
 # Comment existing config - which usually is '%wheel ALL=(ALL) ALL'
-/bin/sed -i 's/^%wheel/^#%wheel/g' /etc/sudoers
+/bin/sed -i 's/^%wheel/#%wheel/g' /etc/sudoers
 echo "%wheel   ALL=(ALL)   NOPASSWD: ALL" >> /etc/sudoers
 # Remove the requiretty clause as it does not provides a very impactful security feature
 # Ref: http://unix.stackexchange.com/questions/122616/why-do-i-need-a-tty-to-run-sudo-if-i-can-sudo-without-a-password
