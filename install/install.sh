@@ -6,6 +6,13 @@
 #======================================================================
 # Input args
 SKIP_VM_CREATION=1
+VERBOSE=1
+
+if [ $VERBOSE -eq 1 ]; then
+  verb=""
+else 
+  verb="&> /dev/null"
+fi
 
 # Prog Name
 prog_name="Centos7 Virtual Openstack"
@@ -30,7 +37,7 @@ function ok {
 # Function prompt yes no question
 function promptyn {
   for j in 1 2 3; do
-      read -t 5 -p "$1 [y/n]: "
+      read -t 10 -p "$1 [y/n]: " yn
       case $yn in
           [Yy]* ) return 0;;
           [Nn]* ) return 1;;
@@ -73,10 +80,20 @@ function cleanup {
 	   fi
 	   # Delete vms created
 	   if [ $checkpoint -ge 2 ]; then
+		    if [ $SKIP_VM_CREATION -eq 0 ]; then
+		    	source $manage_vms_delete_vm $vm_base_name $kvm_uri
+		    fi
 		    source $manage_vms_delete_vm $vm_controller_name $kvm_uri
                     source $manage_vms_delete_vm $vm_network_name $kvm_uri
                     source $manage_vms_delete_vm $vm_compute1_name $kvm_uri
-	   fi
+		    # Clean libvirt leases file for default network		    
+		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/default.leases
+		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/virbr0.status
+		
+   	   fi
+	  # if [ $checkpoint -ge 3 ]; then
+	  # 	    # Clean known_hosts file
+	  # fi
    fi
    # Line on stdout
    echo ""
@@ -168,7 +185,7 @@ log "Restart network default.. "
 virsh -c $kvm_uri net-destroy default && virsh -c $kvm_uri net-start default
 ok
 
-exit -1
+
 #=======================================================================
 #
 # 2. Vm Creation
@@ -272,7 +289,7 @@ ok
 RESULT=0
 log "Test if given Ips are available in the list of known_hosts.. "
 if [ ! -f ~/.ssh/known_hosts ]; then
-   mkdir -p ~/.ssh/known_hosts
+   touch ~/.ssh/known_hosts
 else 
   for i in 1 2 3; do
         case $i in
@@ -298,6 +315,10 @@ else
 fi
 ok
 
+# Checkpoint=3 -> limpar known_hosts file
+
+checkpoint=3
+
 log "Add VMs to the list of known_hosts, by using key-scan.. "
 ssh-keyscan -t rsa,dsa $vm_controller_ip_eth0 >> ~/.ssh/known_hosts
 ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts
@@ -313,68 +334,63 @@ ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_network_ip_eth0
 ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_compute1_ip_eth0
 ok
 
-log "Add generated ssh-key to ssh-agent.. "
-exec ssh-agent bash
-ssh-add ~/.ssh/$ssh_key_name
-ok
-
 # Find a way to test if this succedded - else we gotta exit cause we cant send commands to vms
 # use timeout in ssh - if it fails then we gotta exit - delete all vms? 
 
 log "Check if ssh-configuration was successfull.. "
-ssh -o ConnectionTimeout=5 -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 'exit'
-ssh -o ConnectionTimeout=5 -o BatchMode=yes $vm_user@$vm_network_ip_eth0 'exit'
-ssh -o ConnectionTimeout=5 -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 'exit'
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 'exit'
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 'exit'
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 'exit'
 ok
 
 # Configure eth1 on network and compute1 nodes
 ## On Network node
 log "Configure data network on VMs - eth1 on Network VM.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo sed -i \"s|HWADDR=.*|HWADDR=$mac_network_data|\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo sed -i \"s|eth0|eth1|\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo sed -i \"/UUID/d\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'UUID=\"$(uuidgen)\"' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+"echo 'UUID=\"$(uuidgen)\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'DNS1=$management_network_ip' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+"echo 'DNS1=$management_network_ip' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo ifup eth1"
 
 ok
 ## On Compute node
 log "Configure data network on VMs - eth1 on Compute1 VM.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo cp /etc/sysconfig/network-scripts/ifcfg-eth0 /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo sed -i \"s|HWADDR=.*|HWADDR=$mac_compute1_data|\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo sed -i \"s|eth0|eth1|\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo sed -i \"/UUID/d\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
-"echo 'UUID=\"$(uuidgen)\"' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+"echo 'UUID=\"$(uuidgen)\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
-"echo 'DNS1=$management_network_ip' || sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+"echo 'DNS1=$management_network_ip' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo ifup eth1"
 
 ok
@@ -383,13 +399,13 @@ ok
 
 log "Verify that VMs have internet connection.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "ping -c 2 www.google.com"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "ping -c 2 www.google.com"
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "ping -c 2 www.google.com"
 
 ok
@@ -413,49 +429,51 @@ ok
 ##Controller
 log "Configure and start the ntp service - Controller VM.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo bash -s" < $os_set_ntp 1
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service"
 
 ok
 ##Network
 log "Configure and start the ntp service - Network VM.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo bash -s" < $os_set_ntp 0 $vm_controller_ip_eth0
 
-ssh -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service"
 
 ok
 ##Compute1
 log "Configure and start the ntp service - Compute1 VM.."
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo bash -s" < $os_set_ntp 0 $vm_controller_ip_eth0
 
-ssh -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service"
 
 ok
 #======================================================================
 #
-# 3. Install Openstack
+# 4. Install Openstack
 #
 #======================================================================
-checkpoint=3
+## If something fails from now on - just revert-snapshots to fresh_clone
+checkpoint=-4
+
 # Rdo repository
 log "Installing packstack on the Controller VM.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm"
 # Install Packstack
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y openstack-packstack"
 # Openstack-Utils
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y openstack-utils"
 ok
 
@@ -465,7 +483,7 @@ ANSWERS_FILE="packstack_answers$(date +%s).conf"
 
 log "Generate the answers file using packstack.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "packstack --gen-answer-file=$ANSWERS_FILE"
 
 ok
@@ -477,60 +495,90 @@ log "Edit answers file according to our configuration: vms ips, ntp servers, etc
 #ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 #"openstack-config --set $ANSWERS_FILE general CONFIG_NTP_SERVERS $ntp_servers_list"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG__COMPUTE_HOSTS $vm_compute1_ip_eth0"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_COMPUTE_HOSTS $vm_compute1_ip_eth0"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NETWORK_HOSTS $vm_network_ip_eth0"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_TUNNEL_ID_RANGES 1001:2000"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_TUNNEL_ID_RANGES 1001:2000"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VXLAN_GROUP 239.1.1.2"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VNI_RANGES 1001:2000"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS physnet1:br-ex"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_RANGES 1001:2000"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_PROVISION_DEMO n"
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF=eth1"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF eth1"
 
 ok
 
-exit 0
 # Re run packstack
 log "Running packstack with configured values - this may take a while.. "
 
-ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "packstack --answer-file=$name_packstack_file"
 
 ok
 
+## Create snapshots
+log "Take snapshots of VMs after successful openstack install.. "
+
+virsh -c $kvm_uri snapshot-create-as $vm_controller_name "ok_openstack_install" "Centos 7 Controller VM with fresh Neutron Openstack" \
+--atomic --reuse-external
+
+virsh -c $kvm_uri snapshot-create-as $vm_network_name "ok_openstack_install" "Centos 7 Network VM with fresh Neutron Openstack" \
+ --atomic --reuse-external
+
+virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_openstack install" "Centos 7 Compute1 VM with fresh Neutron Openstack" \
+--atomic --reuse-external
+
+ok
 
 #======================================================================
 #
-# 4. Install Rally and gather benchmarking data
+# 5. Install Rally and gather benchmarking data
 #
 #======================================================================
+# If something fails- revert snapshots
+checkpoint=-5
 
+# Install Dependencies
+log "Install Rally - dependencies.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo yum -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git"
+ok
 # Install Rally
+log "Install Rally - download installation script.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"curl https://raw.githubusercontent.com/openstack/rally/master/install_rally.sh > ~/install_rally.sh && chmod +x ~/install_rally.sh"
+ok
 
-# Run Rally
+log "Install Rally - run installation script - this may take a while.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo bash ~/install_rally.sh -y"
+ok
+
+# Populate Rally's database
+log "Populate Rally's database.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo rally-manage db recreate"
+ok
+
+# Register Openstack in Rally
+log "Register the Openstack deployment in Rally.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=existing'"
+ok
 
 # Show results
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 
-#======================================================================
-#
-# 5. Finalize
-#
-#======================================================================
-
-# Install openstack-management scripts
-
-# Display useful messages

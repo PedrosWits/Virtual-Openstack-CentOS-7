@@ -1,0 +1,11 @@
+<network>
+  <name>openstack-data</name>
+  <bridge name='os-data'/>
+  <ip address='10.0.0.1' netmask='255.255.255.0'>
+     <dhcp>
+ 	  <range start='10.0.0.2' end='10.0.0.254'/>
+<host mac='52:54:00:98:20:4A' name='centos7-compute1' ip='10.0.1.31'/>
+<host mac='52:54:00:BF:FB:B9' name='centos7-network' ip='10.0.1.21'/>
+    </dhcp>
+  </ip>
+</network>
