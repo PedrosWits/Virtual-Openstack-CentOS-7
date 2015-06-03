@@ -1,0 +1,16 @@
+
+[0;36m[Centos7 Virtual Openstack][0m Centos7 Virtual Openstack starting on Qua Jun  3 12:17:58 WEST 2015.
+[0;36m[Centos7 Virtual Openstack][0m Load variables from user-editable file - /home/psilva/Virtual-Openstack-CentOS-7/install/user.cfg.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Load file names and structure.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Generate MACs.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Check if required software is installed.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Test if name 'openstack-data' for data network is available.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Read empty xml template into temporary file /home/psilva/Virtual-Openstack-CentOS-7/install/openstack_data_network.xml.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Prepare xml file for creating isolated data network .. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Create and start the network openstack-data.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Check if the requested IPs are available for the default network.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Edit network default - add controller node ip.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Edit network default - add network node ip.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Edit network default - add compute1 ip.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Restart network default.. [0;32m[OK][0m
+[0;36m[Centos7 Virtual Openstack][0m Creating base vm - this may take a while... [0;32m[OK][0m

@@ -5,14 +5,7 @@
 #
 #======================================================================
 # Input args
-SKIP_VM_CREATION=1
-VERBOSE=1
-
-if [ $VERBOSE -eq 1 ]; then
-  verb=""
-else 
-  verb="&> /dev/null"
-fi
+SKIP_VM_CREATION=0
 
 # Prog Name
 prog_name="Centos7 Virtual Openstack"
@@ -21,18 +14,24 @@ checkpoint=0
 
 # Set -e : Script exits on a command returning error
 set -e
+# Exit if trying to use an unset variable
+set -u
 
 # OK, FAILED STRINGS
 SOK="\e[0;32m[OK]\e[0m"
 SFAILED="\e[0;31m[FAILED]\e[0m"
 
 # Log function
+log_file="install.log"
+echo "" > $log_file
+
 log_tag="\e[0;36m[$prog_name]\e[0m"
 function log { 
-  echo -n -e "$log_tag $*"
+    echo -e -n "$log_tag $*" 2>&1 | tee --append $log_file
+    echo ""
 }
 function ok {
-   echo -e -n "$SOK\n"
+    echo -e "$SOK" | tee --append $log_file
 }
 # Function prompt yes no question
 function promptyn {
@@ -49,32 +48,32 @@ function promptyn {
 
 # Pointer to file loader script - takes the current path as argument
 config_files="src/config/file-tree.sh"
-user_config="$PWD/user.cfg"
+user_config="$(pwd -P)/user.cfg"
 
 echo ""
 log "$prog_name starting on $(date).\n"
 echo -e "$log_tag #==================================================================#"
 # Load user-defined variables
 log "Load variables from user-editable file - $user_config.. "
-source $user_config
+source $user_config 
 ok
 
 # Load file names
 log "Load file names and structure.. "
-source $config_files $(pwd -P)
+source $config_files $(pwd -P) 
 ok
 
 data_network_file="$(pwd -P)/openstack_data_network.xml"
+touch $data_network_file 
 # Clean_up function - can only be defined after loading file names and user variables
 function cleanup {
    if [ "$?" -eq 0 ]; then
-   	   echo -e -n "\n$log_tag \e[0;32mInstallation successful!\e[0m\n"
+   	   echo -e "$log_tag \e[0;32mInstallation successful!\e[0m"
    else
-     	   echo -e -n "$SFAILED\n"
-	   echo -e -n "\n$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up..\n"
+     	   echo -e "$SFAILED"
+	   echo -e "$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up.."
 	   # Reset default-net, delete data-net.
 	   if [ $checkpoint -ge 1 ]; then
-		    rm -f $data_network_file
                     source $manage_vms_reset_default $kvm_uri
                     source $manage_vms_delete_net $data_network_name $kvm_uri
 	   fi
@@ -89,14 +88,26 @@ function cleanup {
 		    # Clean libvirt leases file for default network		    
 		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/default.leases
 		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/virbr0.status
-		
    	   fi
-	  # if [ $checkpoint -ge 3 ]; then
-	  # 	    # Clean known_hosts file
-	  # fi
+	   if [ $checkpoint -ge 3 ]; then
+	    	    # Clean known_hosts file
+		    ssh-keygen -R $vm_controller_ip_eth0
+		    ssh-keygen -R $vm_network_ip_eth0
+		    ssh-keygen -R $vm_compute1_ip_eth0
+	   fi
+	   if [ $checkpoint -eq -4 ]; then
+		    virsh snapshot-revert --domain $vm_controller_name fresh_install
+		    virsh snapshot-revert --domain $vm_network_name fresh_install
+                    virsh snapshot-revert --domain $vm_compute1_name fresh_install
+	   fi
+           if [ $checkpoint -eq -5 ]; then
+		    virsh snapshot-revert --domain $vm_controller_name ok_openstack_install
+		    virsh snapshot-revert --domain $vm_controller_name ok_openstack_install
+		    virsh snapshot-revert --domain $vm_controller_name ok_openstack_install
+	   fi
+	   ok
    fi
-   # Line on stdout
-   echo ""
+   rm -f $data_network_file
 }
 # Define trap
 trap cleanup EXIT SIGHUP SIGINT SIGTERM
@@ -106,8 +117,6 @@ trap cleanup EXIT SIGHUP SIGINT SIGTERM
 # 1. Libvirt
 #
 #======================================================================
-checkpoint=1
-
 # Generate MACS and constants
 log "Generate MACs.. "
 source $config_constants $utility_macgen
@@ -115,23 +124,26 @@ ok
 
 log "Check if required software is installed.. "
 
-
+required="Required packages are not installed, please run first: 'sudo yum install kvm qemu-kvm python-virtinst libvirt libvirt-python virt-manager libguestfs-tools bridge-utils openssh'"
+type virsh > /dev/null 2>&1 || echo -e "\nLibvirt not installed. $required"
+type virt-install > /dev/null 2>&1 || echo -e "\nLibguestfs-tools not installed. $required"
+type ssh-keygen > /dev/null 2>&1 || echo -e "\nOpenssl not installed. $required"
 
 ok
 
+checkpoint=1
 # Create data network in libvirt
 # if given network exists exit
 RESULT=0
 
 log "Test if name '$data_network_name' for data network is available.. "
-virsh -c $kvm_uri net-info $data_network_name &> /dev/null && RESULT=1 || true 
+virsh -c $kvm_uri net-info $data_network_name && RESULT=1 || true 
 if [ $RESULT -eq 1 ]; then
   exit 1
 fi
 ok
 
-log "Creating temporary file $data_network_file, for creating data network through xml template.. "
-touch $data_network_file
+log "Read empty xml template into temporary file $data_network_file.. "
 cat $xml_data_network | tee --append $data_network_file
 ok
 
@@ -154,9 +166,9 @@ ok
 
 ## Create and start the network
 log "Create and start the network $data_network_name.. "
-virsh -c $kvm_uri net-define $data_network_file
-virsh -c $kvm_uri net-start $data_network_name
-virsh -c $kvm_uri net-autostart $data_network_name
+virsh -c $kvm_uri net-define $data_network_file 
+virsh -c $kvm_uri net-start $data_network_name 
+virsh -c $kvm_uri net-autostart $data_network_name 
 ok
 
 # Check if ips are available in net-default through net-dumpxml
@@ -167,22 +179,22 @@ ok
 # Edit default network 
 ## The Ip for the controller
 log "Edit network default - add controller node ip.. "
-EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_controller_default' name='$vm_controller_name' ip='$vm_controller_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default
+EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_controller_default' name='$vm_controller_name' ip='$vm_controller_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default 
 ok
 
 ## The Ip for the network
 log "Edit network default - add network node ip.. "
-EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_network_default' name='$vm_network_name' ip='$vm_network_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default
+EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_network_default' name='$vm_network_name' ip='$vm_network_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default 
 ok
 
 # The Ip for the compute1
 log "Edit network default - add compute1 ip.. "
-EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_compute1_default' name='$vm_compute1_name' ip='$vm_compute1_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default
+EDITOR="sed -i \"/<dhcp>/a <host mac = '$mac_compute1_default' name='$vm_compute1_name' ip='$vm_compute1_ip_eth0'/>\"" virsh -c $kvm_uri net-edit default 
 ok
 
 # Restart the network default
 log "Restart network default.. "
-virsh -c $kvm_uri net-destroy default && virsh -c $kvm_uri net-start default
+virsh -c $kvm_uri net-destroy default && virsh -c $kvm_uri net-start default 
 ok
 
 
@@ -195,20 +207,21 @@ checkpoint=2
 
 # Create base vm w/ kickstart
 if [ $SKIP_VM_CREATION -eq 0 ]; then
+	# Create vm
 	log "Creating base vm - this may take a while... "
-	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path
+	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path  
 	ok
 
 	# Snapshot
 	log "$vm_base_name - Create snapshot fresh install.. "
 	virsh -c $kvm_uri snapshot-create-as $vm_base_name fresh_install "Centos 7 Base VM" \
-	--atomic --reuse-external
+	--atomic --reuse-external 
 	ok
 
 	# Prep Clone
 	log "Prepare base VM for cloning - virt-sysprep.. "
 	sudo virt-sysprep -c $kvm_uri -d $vm_base_name \
-	--firstboot-command "echo 'HWADDR=' | cat - /sys/class/net/eth0/address | tr -d '\n' | sed 'a\\' >> /etc/sysconfig/network-scripts/ifcfg-eth0"
+	--firstboot-command "echo 'HWADDR=' | cat - /sys/class/net/eth0/address | tr -d '\n' | sed 'a\\' >> /etc/sysconfig/network-scripts/ifcfg-eth0" 
 	ok
 fi
 
@@ -217,24 +230,24 @@ fi
 
 ## Into Controller
 log "Cloning base vm into controller vm.. "
-source $virt_clone_vm $vm_base_name $vm_controller_name $mac_controller_default $kvm_uri $img_disk_path
+source $virt_clone_vm $vm_base_name $vm_controller_name $mac_controller_default $kvm_uri $img_disk_path 
 ok
 
 ## Into Network
 log "Cloning base vm into network vm.. "
-source $virt_clone_vm $vm_base_name $vm_network_name $mac_network_default $kvm_uri $img_disk_path
+source $virt_clone_vm $vm_base_name $vm_network_name $mac_network_default $kvm_uri $img_disk_path 
 ok
 
 ## Into Compute1
 log "Cloning base vm into compute1 vm.. "
-source $virt_clone_vm $vm_base_name $vm_compute1_name $mac_compute1_default $kvm_uri $img_disk_path
+source $virt_clone_vm $vm_base_name $vm_compute1_name $mac_compute1_default $kvm_uri $img_disk_path 
 ok
 
 # Start Domains
 log "Starting VMs - Write HWADDR in ifcfg-eth0 with first-boot.. "
-virsh -c $kvm_uri start $vm_controller_name
-virsh -c $kvm_uri start $vm_network_name
-virsh -c $kvm_uri start $vm_compute1_name
+virsh -c $kvm_uri start $vm_controller_name 
+virsh -c $kvm_uri start $vm_network_name 
+virsh -c $kvm_uri start $vm_compute1_name 
 ok
 
 # Wait for Domains to start - 10 seconds
@@ -244,9 +257,9 @@ ok
 
 # Shutdown
 log "Shutting down VMs for offline network configuration.. "
-virsh -c $kvm_uri shutdown $vm_controller_name
-virsh -c $kvm_uri shutdown $vm_network_name
-virsh -c $kvm_uri shutdown $vm_compute1_name
+virsh -c $kvm_uri shutdown $vm_controller_name 
+virsh -c $kvm_uri shutdown $vm_network_name 
+virsh -c $kvm_uri shutdown $vm_compute1_name 
 ok
 
 log "Waiting 30 seconds for vms to shutdown safely.."
@@ -254,18 +267,18 @@ sleep 30
 ok
 
 # Add NICS of data network to network and compute1
-log "Adding network-interfaces for $network_data_name network in network and compute1 nodes.."
+log "Adding network-interfaces for $data_network_name network in network and compute1 nodes.."
 ## Add NIC 2 to network node
-source $virt_add_nic $vm_network_name $data_network_name $mac_network_data $kvm_uri
+source $virt_add_nic $vm_network_name $data_network_name $mac_network_data $kvm_uri 
 ## Add NIC 2 to compute1 node
-source $virt_add_nic $vm_compute1_name $data_network_name $mac_compute1_data $kvm_uri
+source $virt_add_nic $vm_compute1_name $data_network_name $mac_compute1_data $kvm_uri 
 ok
 
 # Start Domains
 log "Re-starting the VMs.. "
-virsh -c $kvm_uri start $vm_controller_name
-virsh -c $kvm_uri start $vm_network_name
-virsh -c $kvm_uri start $vm_compute1_name
+virsh -c $kvm_uri start $vm_controller_name 
+virsh -c $kvm_uri start $vm_network_name 
+virsh -c $kvm_uri start $vm_compute1_name 
 ok
 
 # Wait for Domains to start - 10 seconds
@@ -281,7 +294,7 @@ log "Generate ssh key for accessing the VMs automatically.. "
 if [ -f ~/.ssh/$ssh_key_name ]; then
   log "A ssh key with the name '$ssh_key_name' already exists. Using the existing one.. "
 else
-  ssh-keygen -t rsa -N "" -f $ssh_key_name
+  ssh-keygen -t rsa -N "" -f $ssh_key_name 
 fi
 ok
 
@@ -289,7 +302,7 @@ ok
 RESULT=0
 log "Test if given Ips are available in the list of known_hosts.. "
 if [ ! -f ~/.ssh/known_hosts ]; then
-   touch ~/.ssh/known_hosts
+   touch ~/.ssh/known_hosts 
 else 
   for i in 1 2 3; do
         case $i in
@@ -303,10 +316,9 @@ else
 	  #Result=1 if found
 	  if [ $RESULT -eq 1 ]; then
 	     #Ask user if he wants to erase value if found. If no response exit automatically.
-	     echo ""
 	     if promptyn "Hostname $hosti exists in known_hosts. Do you wish to erase it and continue?"; then
     	   	 # Erase the value from known_hosts
-		 ssh-keygen -R $hosti
+		 ssh-keygen -R $hosti 
              else
 		exit 1
              fi
@@ -320,9 +332,9 @@ ok
 checkpoint=3
 
 log "Add VMs to the list of known_hosts, by using key-scan.. "
-ssh-keyscan -t rsa,dsa $vm_controller_ip_eth0 >> ~/.ssh/known_hosts
-ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts
-ssh-keyscan -t rsa,dsa $vm_compute1_ip_eth0 >> ~/.ssh/known_hosts
+ssh-keyscan -t rsa,dsa $vm_controller_ip_eth0 >> ~/.ssh/known_hosts 
+ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts 
+ssh-keyscan -t rsa,dsa $vm_compute1_ip_eth0 >> ~/.ssh/known_hosts 
 ok
 
 # Copy key into servers - use same key, no need for different keys - virtual environment thus this is
@@ -338,9 +350,9 @@ ok
 # use timeout in ssh - if it fails then we gotta exit - delete all vms? 
 
 log "Check if ssh-configuration was successfull.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 'exit'
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 'exit'
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 'exit'
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 'exit' 
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 'exit' 
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 'exit' 
 ok
 
 # Configure eth1 on network and compute1 nodes
@@ -366,7 +378,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "echo 'DNS1=$management_network_ip' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"sudo ifup eth1"
+"sudo ifup eth1" 
 
 ok
 ## On Compute node
@@ -391,7 +403,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "echo 'DNS1=$management_network_ip' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth1"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
-"sudo ifup eth1"
+"sudo ifup eth1" 
 
 ok
 
@@ -400,13 +412,13 @@ ok
 log "Verify that VMs have internet connection.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"ping -c 2 www.google.com"
+"ping -c 2 www.google.com" 
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"ping -c 2 www.google.com"
+"ping -c 2 www.google.com" 
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"ping -c 2 www.google.com"
+"ping -c 2 www.google.com" 
 
 ok
 
@@ -414,18 +426,20 @@ ok
 log "Take snapshots of VMs after fresh clone.. "
 
 virsh -c $kvm_uri snapshot-create-as $vm_controller_name "fresh_clone" "Centos 7 Controller VM" \
---atomic --reuse-external
+--atomic --reuse-external 
 
 virsh -c $kvm_uri snapshot-create-as $vm_network_name "fresh_clone" "Centos 7 Network VM" \
- --atomic --reuse-external
+ --atomic --reuse-external 
 
 virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "fresh_clone" "Centos 7 Compute1 VM" \
---atomic --reuse-external
+--atomic --reuse-external 
 
 ok
 
-# Configure ntp in openstack vms, controller - master, rest - slaves
+## If something fails from now on - just revert-snapshots to fresh_clone
+checkpoint=-4
 
+# Configure ntp in openstack vms, controller - master, rest - slaves
 ##Controller
 log "Configure and start the ntp service - Controller VM.. "
 
@@ -433,7 +447,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo bash -s" < $os_set_ntp 1
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service"
+"sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service" 
 
 ok
 ##Network
@@ -443,7 +457,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo bash -s" < $os_set_ntp 0 $vm_controller_ip_eth0
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service"
+"sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service" 
 
 ok
 ##Compute1
@@ -453,7 +467,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
 "sudo bash -s" < $os_set_ntp 0 $vm_controller_ip_eth0
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_eth0 \
-"sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service"
+"sudo systemctl enable ntpd.service && sudo systemctl start ntpd.service" 
 
 ok
 #======================================================================
@@ -461,20 +475,18 @@ ok
 # 4. Install Openstack
 #
 #======================================================================
-## If something fails from now on - just revert-snapshots to fresh_clone
-checkpoint=-4
 
 # Rdo repository
 log "Installing packstack on the Controller VM.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm"
+"sudo yum install -y https://rdoproject.org/repos/rdo-release.rpm" 
 # Install Packstack
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo yum install -y openstack-packstack"
+"sudo yum install -y openstack-packstack" 
 # Openstack-Utils
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo yum install -y openstack-utils"
+"sudo yum install -y openstack-utils" 
 ok
 
 
@@ -525,7 +537,7 @@ ok
 log "Running packstack with configured values - this may take a while.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"packstack --answer-file=$name_packstack_file"
+"packstack --answer-file=$name_packstack_file" 
 
 ok
 
@@ -533,13 +545,13 @@ ok
 log "Take snapshots of VMs after successful openstack install.. "
 
 virsh -c $kvm_uri snapshot-create-as $vm_controller_name "ok_openstack_install" "Centos 7 Controller VM with fresh Neutron Openstack" \
---atomic --reuse-external
+--atomic --reuse-external 
 
 virsh -c $kvm_uri snapshot-create-as $vm_network_name "ok_openstack_install" "Centos 7 Network VM with fresh Neutron Openstack" \
- --atomic --reuse-external
+ --atomic --reuse-external 
 
-virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_openstack install" "Centos 7 Compute1 VM with fresh Neutron Openstack" \
---atomic --reuse-external
+virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_openstack_install" "Centos 7 Compute1 VM with fresh Neutron Openstack" \
+--atomic --reuse-external 
 
 ok
 
@@ -554,31 +566,33 @@ checkpoint=-5
 # Install Dependencies
 log "Install Rally - dependencies.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo yum -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git"
+"sudo yum -q -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git" 
 ok
 # Install Rally
 log "Install Rally - download installation script.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"curl https://raw.githubusercontent.com/openstack/rally/master/install_rally.sh > ~/install_rally.sh && chmod +x ~/install_rally.sh"
+"curl https://raw.githubusercontent.com/openstack/rally/master/install_rally.sh > ~/install_rally.sh && chmod +x ~/install_rally.sh" 
 ok
 
 log "Install Rally - run installation script - this may take a while.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo bash ~/install_rally.sh -y"
+"sudo bash ~/install_rally.sh -y" 
 ok
 
 # Populate Rally's database
 log "Populate Rally's database.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo rally-manage db recreate"
+"sudo rally-manage db recreate" 
 ok
 
 # Register Openstack in Rally
 log "Register the Openstack deployment in Rally.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=existing'"
+"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=existing'" 
 ok
 
-# Show results
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-
+# Deployment Check
+log "Check that the current openstack deployment is healthy and ready to be benchmarked.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"rally deployment check" 
+ok

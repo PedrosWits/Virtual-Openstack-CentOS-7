@@ -9,7 +9,7 @@ domain=$1
 kvm_uri=$2
 
 # Destory domain (stop if running)
-virsh -c $kvm_uri destroy $domain
+virsh -c $kvm_uri destroy $domain || true
 
 # Undefine domain
 virsh -c $kvm_uri undefine $domain --remove-all-storage --wipe-storage --snapshots-metadata --nvram
