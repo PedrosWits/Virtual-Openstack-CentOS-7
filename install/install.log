@@ -1,6 +1,0 @@
-
-[0;36m[Centos7 Virtual Openstack][0m Centos7 Virtual Openstack starting on Qua Jun  3 14:46:40 WEST 2015.
-[0;36m[Centos7 Virtual Openstack][0m Load variables from user-editable file - /home/psilva/Virtual-Openstack-CentOS-7/install/user.cfg.. [0;32m[OK][0m
-[0;36m[Centos7 Virtual Openstack][0m Load file names and structure.. [0;32m[OK][0m
-[0;36m[Centos7 Virtual Openstack][0m Check if virtualization is enabled.. [0;32m[OK][0m
-[0;36m[Centos7 Virtual Openstack][0m [0;36m[Centos7 Virtual Openstack][0m [0;32mInstallation successful![0m

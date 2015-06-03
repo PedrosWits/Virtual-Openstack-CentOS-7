@@ -21,6 +21,6 @@ fi
 EDITOR="sed -i \"/host mac/d\"" virsh -c $kvm_uri net-edit default
 
 if [ $? -eq 0 ]; then
-	virsh -c $kvm_uri net-destroy default
+	virsh -c $kvm_uri net-destroy default || true
 	virsh -c $kvm_uri net-start default
 fi

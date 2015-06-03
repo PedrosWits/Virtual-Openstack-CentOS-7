@@ -1,14 +1,52 @@
 #!/bin/sh
 #======================================================================
 #
+# INPUT ARGS
+#
+#======================================================================
+# Usage
+usage="Usage: install_vorbe.sh [options]
+   --clean          Clean previous installation (remove all traces) with parameters specified in vorbe.cfg
+   --save-base-vm   Save base vm - used for cloning any virtual node
+   --skip-base-vm   Use a saved base vm - with name specified in vorbe.cfg"
+
+# Default values
+CLEAN=0
+SKIP_VM_CREATION=0
+SAVE_BASE_VM=0
+
+while [[ $# > 0 ]]
+do
+key="$1"
+
+case $key in
+   --clean)
+	CLEAN=1;
+   ;;
+   --skip-base-vm)
+	SKIP_VM_CREATION=1
+   ;;
+   --save-base-vm)
+	SAVE_BASE_VM=1
+   ;;
+   *)
+	echo "Unknown option: $key"
+	echo -e "$usage"
+	exit 1
+   ;;
+
+esac
+shift # past argument or value
+done
+
+#======================================================================
+#
 # 0. Startup
 #
 #======================================================================
-# Input args
-SKIP_VM_CREATION=0
-
 # Prog Name
-prog_name="Centos7 Virtual Openstack"
+prog_name="Virtual Openstack RedHat-based Environment"
+prog_sigla="VORbE"
 # Checkpoint variable for cleanup function
 checkpoint=0 
 
@@ -17,21 +55,24 @@ set -e
 # Exit if trying to use an unset variable
 set -u
 
+# START TIME
+START_TIME=$(date +%s%N)
+
 # OK, FAILED STRINGS
-SOK="\e[0;32m[OK]\e[0m"
-SFAILED="\e[0;31m[FAILED]\e[0m"
+SOK="\e[0;32m[ OK ]\e[0m"
+SFAILED="\e[0;31m[ FAILED ]\e[0m"
 
 # Log function
-log_file="install.log"
+log_file="install_vorbe.log"
 echo "" > $log_file
 
-log_tag="\e[0;36m[$prog_name]\e[0m"
+log_tag="\e[0;36m[$prog_sigla]\e[0m"
 function log { 
     echo -e -n "$log_tag $*" 2>&1 | tee --append $log_file
     echo ""
 }
 function ok {
-    echo -e "$SOK" | tee --append $log_file
+    echo -e "$SOK" | tee --append $log_file 
 }
 # Function prompt yes no question
 function promptyn {
@@ -48,10 +89,10 @@ function promptyn {
 
 # Pointer to file loader script - takes the current path as argument
 config_files="src/config/file-tree.sh"
-user_config="$(pwd -P)/user.cfg"
+user_config="$(pwd -P)/vorbe.cfg"
 
 echo ""
-log "$prog_name starting on $(date).\n"
+echo -e "$prog_sigla: $prog_name starting on $(date)" | tee --append $log_file
 echo -e "$log_tag #==================================================================#"
 # Load user-defined variables
 log "Load variables from user-editable file - $user_config.. "
@@ -68,49 +109,63 @@ touch $data_network_file
 # Clean_up function - can only be defined after loading file names and user variables
 function cleanup {
    if [ "$?" -eq 0 ]; then
-   	   log "$log_tag \e[0;32mInstallation successful!\e[0m\n"	   
+   	   echo -e "$log_tag \e[0;32mInstallation successful!\e[0m" | tee --append $log_file   
    else
-     	   log "$SFAILED"
-	   log "$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up.."
+	   if [ $CLEAN -eq 1 ]; then
+	       log "Cleaning up previous installation, with variables read from '$user_config'.. "
+	   else
+               echo -e "$SFAILED" | tee --append $log_file
+	       log "\e[0;31mInstallation unsuccessful!\e[0m Cleaning up.."
+	   fi
 	   # Reset default-net, delete data-net.
 	   if [ $checkpoint -ge 1 ]; then
-                    source $manage_vms_reset_default $kvm_uri
-                    source $manage_vms_delete_net $data_network_name $kvm_uri
+                    source $manage_vms_reset_default $kvm_uri || true
+                    source $manage_vms_delete_net $data_network_name $kvm_uri || true
 	   fi
 	   # Delete vms created
 	   if [ $checkpoint -ge 2 ]; then
-		    if [ $SKIP_VM_CREATION -eq 0 ]; then
-		    	source $manage_vms_delete_vm $vm_base_name $kvm_uri
+		    if [ $SKIP_VM_CREATION -eq 0 -a $SAVE_BASE_VM -eq 0 ]; then
+		    	source $manage_vms_delete_vm $vm_base_name $kvm_uri || true
 		    fi
-		    source $manage_vms_delete_vm $vm_controller_name $kvm_uri
-                    source $manage_vms_delete_vm $vm_network_name $kvm_uri
-                    source $manage_vms_delete_vm $vm_compute1_name $kvm_uri
+		    source $manage_vms_delete_vm $vm_controller_name $kvm_uri || true
+                    source $manage_vms_delete_vm $vm_network_name $kvm_uri || true
+                    source $manage_vms_delete_vm $vm_compute1_name $kvm_uri || true
 		    # Clean libvirt leases file for default network		    
 		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/default.leases
 		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/virbr0.status
    	   fi
 	   if [ $checkpoint -ge 3 ]; then
 	    	    # Clean known_hosts file
-		    ssh-keygen -R $vm_controller_ip_eth0
-		    ssh-keygen -R $vm_network_ip_eth0
-		    ssh-keygen -R $vm_compute1_ip_eth0
+		    ssh-keygen -R $vm_controller_ip_eth0 || true
+		    ssh-keygen -R $vm_network_ip_eth0 || true
+		    ssh-keygen -R $vm_compute1_ip_eth0 || true
 	   fi
 	   if [ $checkpoint -eq -4 ]; then
-		    virsh snapshot-revert --domain $vm_controller_name fresh_install
-		    virsh snapshot-revert --domain $vm_network_name fresh_install
-                    virsh snapshot-revert --domain $vm_compute1_name fresh_install
+		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name fresh_install || true
+		    virsh snapshot-revert -c $kvm_uri --domain $vm_network_name fresh_install || true
+                    virsh snapshot-revert -c $kvm_uri --domain $vm_compute1_name fresh_install || true
 	   fi
            if [ $checkpoint -eq -5 ]; then
-		    virsh snapshot-revert --domain $vm_controller_name ok_openstack_install
-		    virsh snapshot-revert --domain $vm_controller_name ok_openstack_install
-		    virsh snapshot-revert --domain $vm_controller_name ok_openstack_install
+		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name ok_openstack_install || true
+		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name ok_openstack_install || true
+		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name ok_openstack_install || true
 	   fi
 	   ok
    fi
    rm -f $data_network_file
+   END_TIME=$(date +%s%N)
+   ELAPSED_TIME_MILLI=$((($END_TIME-$START_TIME)/1000000))
+   ELAPSED_TIME_SEC=$(($ELAPSED_TIME_MILLI/1000))
+   ELAPSED_TIME_MIN=$(($ELAPSED_TIME_SEC/60))
+   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m $(($ELAPSED_TIME_SEC - $ELAPSED_TIME_MIN * 1000))s $(($ELAPSED_TIME_MILLI - $ELAPSED_TIME_SEC * 1000))ms" | tee --append $log_file
 }
 # Define trap
 trap cleanup EXIT SIGHUP SIGINT SIGTERM
+
+if [ $CLEAN -eq 1 ]; then
+    checkpoint=100
+    exit 1
+fi
 
 #=====================================================================
 #
@@ -559,7 +614,7 @@ ok
 log "Running packstack with configured values - this may take a while.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"packstack --answer-file=$name_packstack_file" 
+"packstack --answer-file=$ANSWERS_FILE" 
 
 ok
 
