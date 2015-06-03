@@ -68,10 +68,10 @@ touch $data_network_file
 # Clean_up function - can only be defined after loading file names and user variables
 function cleanup {
    if [ "$?" -eq 0 ]; then
-   	   echo -e "$log_tag \e[0;32mInstallation successful!\e[0m"
+   	   log "$log_tag \e[0;32mInstallation successful!\e[0m\n"	   
    else
-     	   echo -e "$SFAILED"
-	   echo -e "$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up.."
+     	   log "$SFAILED"
+	   log "$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up.."
 	   # Reset default-net, delete data-net.
 	   if [ $checkpoint -ge 1 ]; then
                     source $manage_vms_reset_default $kvm_uri
@@ -117,6 +117,16 @@ trap cleanup EXIT SIGHUP SIGINT SIGTERM
 # 1. Libvirt
 #
 #======================================================================
+# Check if virtualization is enabled
+log "Check if virtualization is enabled.. "
+ncpus=$(egrep -c '(svm|vmx)' /proc/cpuinfo)
+
+if [ $ncpus -lt 1 ]; then
+  log "Hardware virtualization is disabled or not supported!"
+  exit -1
+fi
+ok
+
 # Generate MACS and constants
 log "Generate MACs.. "
 source $config_constants $utility_macgen
@@ -286,6 +296,13 @@ log "Waiting 30 seconds for vms to start safely.."
 sleep 30
 ok
 
+# Install ssh_pass if not installed
+log "Check if 'sshpass' is installed.. "
+if [ ! type sshpass > /dev/null 2>&1 ]; then
+    sudo yum -y -q install sshpass
+fi
+ok
+
 # Now I can run commands remotely on the VMs using ssh
 # Setup ssh keys so we can run commands over ssh without prompting for password
 ##  Do not create it if it exists already
@@ -337,13 +354,18 @@ ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts
 ssh-keyscan -t rsa,dsa $vm_compute1_ip_eth0 >> ~/.ssh/known_hosts 
 ok
 
+# Set SSHPASS environment variable to use with sshpass
+log "Set SSHPASS environment variable for non-interactive ssh-copy-id. Read pass from user.cfg.. "
+export SSHPASS="$vm_pass"
+ok
+
 # Copy key into servers - use same key, no need for different keys - virtual environment thus this is
 # the single point of access to it
 # Keys for root access
 log "Install the keys onto the VMs.. "
-ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_controller_ip_eth0
-ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_network_ip_eth0
-ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_compute1_ip_eth0
+sshpass -e ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_controller_ip_eth0
+sshpass -e ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_network_ip_eth0
+sshpass -e ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_compute1_ip_eth0
 ok
 
 # Find a way to test if this succedded - else we gotta exit cause we cant send commands to vms
