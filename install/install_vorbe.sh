@@ -673,3 +673,5 @@ log "Check that the current openstack deployment is healthy and ready to be benc
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "rally deployment check" 
 ok
+
+# Run 
