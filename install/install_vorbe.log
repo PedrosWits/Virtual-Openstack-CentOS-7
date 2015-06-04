@@ -1,6 +1,49 @@
 
-VORbE: Virtual Openstack RedHat-based Environment starting on Qua Jun  3 17:48:23 WEST 2015
-[0;36m[VORbE][0m Load variables from user-editable file - /home/psilva/Virtual-Openstack-CentOS-7/install/vorbe.cfg.. [0;32m[ OK ][0m
+VORbE: Virtual Openstack RedHat-based Environment starting on Qui Jun  4 15:55:26 WEST 2015
+[0;36m[VORbE][0m Load variables from user-editable file - /home/psilva/vorbe/install/vorbe.cfg.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Load file names and structure.. [0;32m[ OK ][0m
-[0;36m[VORbE][0m [0;32mInstallation successful![0m
-[0;36m[VORbE][0m Elapsed Time: 0m 0s 34ms
+[0;36m[VORbE][0m Check if virtualization is enabled.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Generate MACs.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Check if required software is installed.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Test if name 'openstack-data' for data network is available.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Read empty xml template into temporary file /home/psilva/vorbe/install/openstack_data_network.xml.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Prepare xml file for creating isolated data network .. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Create and start the network openstack-data.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Check if the requested IPs are available for the default network.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Edit network default - add controller node ip.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Edit network default - add network node ip.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Edit network default - add compute1 ip.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Restart network default.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Creating base vm - this may take a while... [0;32m[ OK ][0m
+[0;36m[VORbE][0m centos7-base - Create snapshot fresh install.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Prepare base VM for cloning - virt-sysprep.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Cloning base vm into controller vm.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Cloning base vm into network vm.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Cloning base vm into compute1 vm.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Starting VMs - Write HWADDR in ifcfg-eth0 with first-boot.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Waiting 30 seconds for vms to start and perform first-boot script safely..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Shutting down VMs for offline network configuration.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Waiting 30 seconds for vms to shutdown safely..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Adding network-interfaces for openstack-data network in network and compute1 nodes..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Re-starting the VMs.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Waiting 30 seconds for vms to start safely..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Check if 'sshpass' is installed.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Generate ssh key for accessing the VMs automatically.. [0;36m[VORbE][0m A ssh key with the name 'virt-openstack.key' already exists. Using the existing one.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Test if given Ips are available in the list of known_hosts.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Add VMs to the list of known_hosts, by using key-scan.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Set SSHPASS environment variable for non-interactive ssh-copy-id. Read pass from user.cfg.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Install the keys onto the VMs.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Check if ssh-configuration was successfull.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Configure data network on VMs - eth1 on Network VM.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Configure data network on VMs - eth1 on Compute1 VM.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Verify that VMs have internet connection.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Take snapshots of VMs after fresh clone.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Configure and start the ntp service - Controller VM.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Configure and start the ntp service - Network VM.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Configure and start the ntp service - Compute1 VM..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Installing packstack on the Controller VM.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Generate the answers file using packstack.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Edit answers file according to our configuration: vms ips, ntp servers, etc.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Running packstack with configured values - this may take a while.. [0;31m[ FAILED ][0m
+[0;36m[VORbE][0m [0;31mInstallation unsuccessful![0m Cleaning up..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Elapsed Time: 16m -15016s 238ms

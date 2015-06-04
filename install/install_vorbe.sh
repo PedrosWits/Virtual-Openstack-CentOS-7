@@ -8,8 +8,9 @@
 usage="Usage: install_vorbe.sh [options]
    --clean          Clean previous installation (remove all traces) with parameters specified in vorbe.cfg
    --save-base-vm   Save base vm - used for cloning any virtual node
-   --skip-base-vm   Use a saved base vm - with name specified in vorbe.cfg"
-
+   --skip-base-vm   Use a saved base vm - with name specified in vorbe.cfg
+   --debug          Do not clean anything in case installation fails
+   --help           Prompt usage and help information"
 # Default values
 CLEAN=0
 SKIP_VM_CREATION=0
@@ -141,14 +142,14 @@ function cleanup {
 		    ssh-keygen -R $vm_compute1_ip_eth0 || true
 	   fi
 	   if [ $checkpoint -eq -4 ]; then
-		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name fresh_install || true
-		    virsh snapshot-revert -c $kvm_uri --domain $vm_network_name fresh_install || true
-                    virsh snapshot-revert -c $kvm_uri --domain $vm_compute1_name fresh_install || true
+		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name fresh_install || true
+		    virsh -c $kvm_uri snapshot-revert --domain $vm_network_name fresh_install || true
+                    virsh -c $kvm_uri snapshot-revert --domain $vm_compute1_name fresh_install || true
 	   fi
            if [ $checkpoint -eq -5 ]; then
-		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name ok_openstack_install || true
-		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name ok_openstack_install || true
-		    virsh snapshot-revert -c $kvm_uri --domain $vm_controller_name ok_openstack_install || true
+		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
+		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
+		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
 	   fi
 	   ok
    fi
@@ -157,7 +158,7 @@ function cleanup {
    ELAPSED_TIME_MILLI=$((($END_TIME-$START_TIME)/1000000))
    ELAPSED_TIME_SEC=$(($ELAPSED_TIME_MILLI/1000))
    ELAPSED_TIME_MIN=$(($ELAPSED_TIME_SEC/60))
-   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m $(($ELAPSED_TIME_SEC - $ELAPSED_TIME_MIN * 1000))s $(($ELAPSED_TIME_MILLI - $ELAPSED_TIME_SEC * 1000))ms" | tee --append $log_file
+   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m $((${ELAPSED_TIME_SEC} - ${ELAPSED_TIME_MIN}*60))s $((${ELAPSED_TIME_MILLI} - ${ELAPSED_TIME_SEC} * 1000))ms" | tee --append $log_file
 }
 # Define trap
 trap cleanup EXIT SIGHUP SIGINT SIGTERM
@@ -364,7 +365,7 @@ ok
 
 log "Generate ssh key for accessing the VMs automatically.. "
 if [ -f ~/.ssh/$ssh_key_name ]; then
-  log "A ssh key with the name '$ssh_key_name' already exists. Using the existing one.. "
+  log "\nA ssh key with the name '$ssh_key_name' already exists. Using the existing one.. "
 else
   ssh-keygen -t rsa -N "" -f $ssh_key_name 
 fi
