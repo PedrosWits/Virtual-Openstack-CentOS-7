@@ -1,5 +1,5 @@
 
-VORbE: Virtual Openstack RedHat-based Environment starting on Qui Jun  4 15:55:26 WEST 2015
+VORbE: Virtual Openstack RedHat-based Environment starting on Seg Jun  8 17:25:38 WEST 2015
 [0;36m[VORbE][0m Load variables from user-editable file - /home/psilva/vorbe/install/vorbe.cfg.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Load file names and structure.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Check if virtualization is enabled.. [0;32m[ OK ][0m
@@ -14,9 +14,6 @@ VORbE: Virtual Openstack RedHat-based Environment starting on Qui Jun  4 15:55:2
 [0;36m[VORbE][0m Edit network default - add network node ip.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Edit network default - add compute1 ip.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Restart network default.. [0;32m[ OK ][0m
-[0;36m[VORbE][0m Creating base vm - this may take a while... [0;32m[ OK ][0m
-[0;36m[VORbE][0m centos7-base - Create snapshot fresh install.. [0;32m[ OK ][0m
-[0;36m[VORbE][0m Prepare base VM for cloning - virt-sysprep.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Cloning base vm into controller vm.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Cloning base vm into network vm.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Cloning base vm into compute1 vm.. [0;32m[ OK ][0m
@@ -28,7 +25,8 @@ VORbE: Virtual Openstack RedHat-based Environment starting on Qui Jun  4 15:55:2
 [0;36m[VORbE][0m Re-starting the VMs.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Waiting 30 seconds for vms to start safely..[0;32m[ OK ][0m
 [0;36m[VORbE][0m Check if 'sshpass' is installed.. [0;32m[ OK ][0m
-[0;36m[VORbE][0m Generate ssh key for accessing the VMs automatically.. [0;36m[VORbE][0m A ssh key with the name 'virt-openstack.key' already exists. Using the existing one.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Generate ssh key for accessing the VMs automatically.. [0;36m[VORbE][0m 
+A ssh key with the name 'virt-openstack.key' already exists. Using the existing one.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Test if given Ips are available in the list of known_hosts.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Add VMs to the list of known_hosts, by using key-scan.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Set SSHPASS environment variable for non-interactive ssh-copy-id. Read pass from user.cfg.. [0;32m[ OK ][0m
@@ -44,6 +42,17 @@ VORbE: Virtual Openstack RedHat-based Environment starting on Qui Jun  4 15:55:2
 [0;36m[VORbE][0m Installing packstack on the Controller VM.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Generate the answers file using packstack.. [0;32m[ OK ][0m
 [0;36m[VORbE][0m Edit answers file according to our configuration: vms ips, ntp servers, etc.. [0;32m[ OK ][0m
-[0;36m[VORbE][0m Running packstack with configured values - this may take a while.. [0;31m[ FAILED ][0m
-[0;36m[VORbE][0m [0;31mInstallation unsuccessful![0m Cleaning up..[0;32m[ OK ][0m
-[0;36m[VORbE][0m Elapsed Time: 16m -15016s 238ms
+[0;36m[VORbE][0m Install ssh key in root users, for automating required priveleged packstack installation.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Running packstack with configured values - this may take a while.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Performing recommended reboot after packstack install.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Waiting 30 seconds for safe reboot..[0;32m[ OK ][0m
+[0;36m[VORbE][0m Take snapshots of VMs after successful openstack install.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Install Rally - dependencies.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Install Rally - download installation script.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Install Rally - run installation script - this may take a while.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Populate Rally's database.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Register the Openstack deployment in Rally.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Register the Openstack deployment in Rally.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m Check that the current openstack deployment is healthy and ready to be benchmarked.. [0;32m[ OK ][0m
+[0;36m[VORbE][0m [0;32mInstallation successful![0m
+[0;36m[VORbE][0m Elapsed Time: 33m 53s

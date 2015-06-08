@@ -32,7 +32,7 @@ dir_src_openstack="openstack"
 
 # Load files from Directory - template
 xml_data_network="$path/$dir_template/openstack-data.xml"
-
+template_kickstart="$path/$dir_template/generic-centos7.ks"
 #===============================================================
 
 # Load Files from Directory - src - config

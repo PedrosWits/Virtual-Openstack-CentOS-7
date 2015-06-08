@@ -11,10 +11,12 @@ usage="Usage: install_vorbe.sh [options]
    --skip-base-vm   Use a saved base vm - with name specified in vorbe.cfg
    --debug          Do not clean anything in case installation fails
    --help           Prompt usage and help information"
+
 # Default values
 CLEAN=0
 SKIP_VM_CREATION=0
 SAVE_BASE_VM=0
+DEBUG=0
 
 while [[ $# > 0 ]]
 do
@@ -29,6 +31,13 @@ case $key in
    ;;
    --save-base-vm)
 	SAVE_BASE_VM=1
+   ;;
+   --debug)
+        DEBUG=1
+   ;;
+   --help)
+	echo -e "$usage"
+	exit 0
    ;;
    *)
 	echo "Unknown option: $key"
@@ -106,59 +115,63 @@ source $config_files $(pwd -P)
 ok
 
 data_network_file="$(pwd -P)/openstack_data_network.xml"
-touch $data_network_file 
+touch $data_network_file
+tmp_kickstart_file="kickstart.ks"
 # Clean_up function - can only be defined after loading file names and user variables
 function cleanup {
    if [ "$?" -eq 0 ]; then
    	   echo -e "$log_tag \e[0;32mInstallation successful!\e[0m" | tee --append $log_file   
    else
 	   if [ $CLEAN -eq 1 ]; then
-	       log "Cleaning up previous installation, with variables read from '$user_config'.. "
+	       echo -e "$log_tag Cleaning up previous installation, with variables read from '$user_config'.. " | tee --append $log_file
 	   else
                echo -e "$SFAILED" | tee --append $log_file
-	       log "\e[0;31mInstallation unsuccessful!\e[0m Cleaning up.."
+	       echo -e "$log_tag \e[0;31mInstallation unsuccessful!\e[0m Cleaning up.." | tee --append $log_file
 	   fi
-	   # Reset default-net, delete data-net.
-	   if [ $checkpoint -ge 1 ]; then
-                    source $manage_vms_reset_default $kvm_uri || true
-                    source $manage_vms_delete_net $data_network_name $kvm_uri || true
+	   if [ $DEBUG -eq 0 ] || [ $CLEAN -eq 1 ]; then
+		   # Reset default-net, delete data-net.
+		   if [ $checkpoint -ge 1 ]; then
+			    source $manage_vms_reset_default $kvm_uri || true
+			    source $manage_vms_delete_net $data_network_name $kvm_uri || true
+		   fi
+		   # Delete vms created
+		   if [ $checkpoint -ge 2 ]; then
+			    if [ $SKIP_VM_CREATION -eq 0 ] && [ $SAVE_BASE_VM -eq 0 ]; then
+				source $manage_vms_delete_vm $vm_base_name $kvm_uri || true
+			    fi
+			    source $manage_vms_delete_vm $vm_controller_name $kvm_uri || true
+			    source $manage_vms_delete_vm $vm_network_name $kvm_uri || true
+			    source $manage_vms_delete_vm $vm_compute1_name $kvm_uri || true
+			    # Clean libvirt leases file for default network		    
+			    sudo truncate -s0 /var/lib/libvirt/dnsmasq/default.leases
+			    sudo truncate -s0 /var/lib/libvirt/dnsmasq/virbr0.status
+		   fi
+		   if [ $checkpoint -ge 3 ]; then
+			    # Clean known_hosts file
+			    ssh-keygen -R $vm_controller_ip_eth0 || true
+			    ssh-keygen -R $vm_network_ip_eth0 || true
+			    ssh-keygen -R $vm_compute1_ip_eth0 || true
+		   fi
+		   if [ $checkpoint -eq -4 ]; then
+			    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name fresh_install || true
+			    virsh -c $kvm_uri snapshot-revert --domain $vm_network_name fresh_install || true
+			    virsh -c $kvm_uri snapshot-revert --domain $vm_compute1_name fresh_install || true
+		   fi
+		   if [ $checkpoint -eq -5 ]; then
+			    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
+			    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
+			    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
+		   fi
+		   ok
 	   fi
-	   # Delete vms created
-	   if [ $checkpoint -ge 2 ]; then
-		    if [ $SKIP_VM_CREATION -eq 0 -a $SAVE_BASE_VM -eq 0 ]; then
-		    	source $manage_vms_delete_vm $vm_base_name $kvm_uri || true
-		    fi
-		    source $manage_vms_delete_vm $vm_controller_name $kvm_uri || true
-                    source $manage_vms_delete_vm $vm_network_name $kvm_uri || true
-                    source $manage_vms_delete_vm $vm_compute1_name $kvm_uri || true
-		    # Clean libvirt leases file for default network		    
-		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/default.leases
-		    sudo truncate -s0 /var/lib/libvirt/dnsmasq/virbr0.status
-   	   fi
-	   if [ $checkpoint -ge 3 ]; then
-	    	    # Clean known_hosts file
-		    ssh-keygen -R $vm_controller_ip_eth0 || true
-		    ssh-keygen -R $vm_network_ip_eth0 || true
-		    ssh-keygen -R $vm_compute1_ip_eth0 || true
-	   fi
-	   if [ $checkpoint -eq -4 ]; then
-		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name fresh_install || true
-		    virsh -c $kvm_uri snapshot-revert --domain $vm_network_name fresh_install || true
-                    virsh -c $kvm_uri snapshot-revert --domain $vm_compute1_name fresh_install || true
-	   fi
-           if [ $checkpoint -eq -5 ]; then
-		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
-		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
-		    virsh -c $kvm_uri snapshot-revert --domain $vm_controller_name ok_openstack_install || true
-	   fi
-	   ok
    fi
    rm -f $data_network_file
+   rm -f $tmp_kickstart_file
    END_TIME=$(date +%s%N)
    ELAPSED_TIME_MILLI=$((($END_TIME-$START_TIME)/1000000))
    ELAPSED_TIME_SEC=$(($ELAPSED_TIME_MILLI/1000))
    ELAPSED_TIME_MIN=$(($ELAPSED_TIME_SEC/60))
-   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m $((${ELAPSED_TIME_SEC} - ${ELAPSED_TIME_MIN}*60))s $((${ELAPSED_TIME_MILLI} - ${ELAPSED_TIME_SEC} * 1000))ms" | tee --append $log_file
+   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m $((${ELAPSED_TIME_SEC} - ${ELAPSED_TIME_MIN}*60))s" | tee --append $log_file
 }
 # Define trap
 trap cleanup EXIT SIGHUP SIGINT SIGTERM
@@ -273,9 +286,16 @@ checkpoint=2
 
 # Create base vm w/ kickstart
 if [ $SKIP_VM_CREATION -eq 0 ]; then
+	# Copy template to local
+	log "Creating tmp kickstart file according to specifications.. "
+	cp $template_kickstart $(pwd -P)/$tmp_kickstart_file
+        # Read passwords from config file and write them in the kickstart
+	
+	
+	ok
 	# Create vm
 	log "Creating base vm - this may take a while... "
-	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $kickstart_file $kvm_uri $img_disk_path  
+	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $tmp_kickstart_file $kvm_uri $img_disk_path  
 	ok
 
 	# Snapshot
@@ -417,7 +437,6 @@ ok
 
 # Copy key into servers - use same key, no need for different keys - virtual environment thus this is
 # the single point of access to it
-# Keys for root access
 log "Install the keys onto the VMs.. "
 sshpass -e ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_controller_ip_eth0
 sshpass -e ssh-copy-id -i ~/.ssh/$ssh_key_name.pub $vm_user@$vm_network_ip_eth0
@@ -515,8 +534,9 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "fresh_clone" "Centos 7 C
 ok
 
 ## If something fails from now on - just revert-snapshots to fresh_clone
-checkpoint=-4
-
+if [ $DEBUG -eq 1 ]; then
+  checkpoint=-4
+fi
 # Configure ntp in openstack vms, controller - master, rest - slaves
 ##Controller
 log "Configure and start the ntp service - Controller VM.. "
@@ -565,6 +585,9 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 # Openstack-Utils
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "sudo yum install -y openstack-utils" 
+# Yum update
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo yum -y update" 
 ok
 
 
@@ -583,7 +606,7 @@ ok
 log "Edit answers file according to our configuration: vms ips, ntp servers, etc.. "
 
 #ssh -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-#"openstack-config --set $ANSWERS_FILE general CONFIG_NTP_SERVERS $ntp_servers_list"
+#"openstack-config --set $ANSWERS_FILE general CONFIG_SSH_KEY /home/$vm_user/.ssh/id_rsa.pub"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_COMPUTE_HOSTS $vm_compute1_ip_eth0"
@@ -592,16 +615,16 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NETWORK_HOSTS $vm_network_ip_eth0"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_TENANT_NETWORK_TYPES gre"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_TYPE_DRIVERS gre"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_TUNNEL_ID_RANGES 1001:2000"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VXLAN_GROUP 239.1.1.2"
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VNI_RANGES 1001:2000"
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS physnet1:br-ex"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_PROVISION_DEMO n"
@@ -611,12 +634,66 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 
 ok
 
+# Install root ssh keys on root user from all nodes - so that packstack can perform priveledged
+# installation on these nodes from the admin user in the controller node
+log "Install ssh key in root users, for automating required priveleged packstack installation.. "
+
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+#"ssh-keygen -t rsa -N \"\""
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"ssh-keyscan -t rsa,dsa $vm_network_ip_eth0 >> ~/.ssh/known_hosts"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"ssh-keyscan -t rsa,dsa $vm_compute1_ip_eth0 >> ~/.ssh/known_hosts"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo rpm -ivh http://pkgs.repoforge.org/sshpass/sshpass-1.05-1.el7.rf.x86_64.rpm"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"install -m 600 /dev/null tmp_root; echo $vm_root_pass > tmp_root"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo mkdir -p /root/.ssh/; cat ~/.ssh/id_rsa.pub | sudo tee --append /root/.ssh/authorized_keys"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sshpass -f tmp_root ssh-copy-id root@$vm_network_ip_eth0"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sshpass -f tmp_root ssh-copy-id root@$vm_compute1_ip_eth0"
+
+#Check if succeeded
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"ssh -o BatchMode=yes root@$vm_network_ip_eth0 'exit'"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"ssh -o BatchMode=yes root@$vm_compute1_ip_eth0 'exit'"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"rm -f tmp_root"
+
+ok
 # Re run packstack
 log "Running packstack with configured values - this may take a while.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"packstack --answer-file=$ANSWERS_FILE" 
+"nohup packstack --answer-file=$ANSWERS_FILE" 
 
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"sudo yum -y update" 
+
+ok
+
+# Reboot vms
+log "Performing recommended reboot after packstack install.. "
+virsh -c $kvm_uri reboot $vm_controller_name 
+virsh -c $kvm_uri reboot $vm_network_name 
+virsh -c $kvm_uri reboot $vm_compute1_name 
+ok
+
+# Wait for Domains to start - 30 seconds
+log "Waiting 30 seconds for safe reboot.."
+sleep 30
 ok
 
 ## Create snapshots
@@ -639,12 +716,14 @@ ok
 #
 #======================================================================
 # If something fails- revert snapshots
-checkpoint=-5
+if [ $DEBUG -eq 1 ]; then
+  checkpoint=-5
+fi
 
 # Install Dependencies
 log "Install Rally - dependencies.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo yum -q -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git" 
+"sudo yum -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git" 
 ok
 # Install Rally
 log "Install Rally - download installation script.. "
@@ -666,7 +745,13 @@ ok
 # Register Openstack in Rally
 log "Register the Openstack deployment in Rally.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=existing'" 
+"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=vorbe'" 
+ok
+
+# Use Deployment
+log "Register the Openstack deployment in Rally.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
+"rally deployment use vorbe"
 ok
 
 # Deployment Check
@@ -675,4 +760,5 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "rally deployment check" 
 ok
 
-# Run 
+
+# Run Tasks
