@@ -1,0 +1,6 @@
+
+orbit: A Virtual Openstack RedHat-based Environment starting on Seg Jun  8 18:29:41 WEST 2015
+[0;36m[orbit][0m Load variables from user-editable file - /home/psilva/openstack-orbit/install/orbit.conf.. [0;32m[ OK ][0m
+[0;36m[orbit][0m Load file names and structure.. [0;32m[ OK ][0m
+[0;36m[orbit][0m [0;32mInstallation successful![0m
+[0;36m[orbit][0m Elapsed Time: 0m 0s

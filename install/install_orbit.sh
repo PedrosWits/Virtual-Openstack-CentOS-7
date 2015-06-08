@@ -5,7 +5,7 @@
 #
 #======================================================================
 # Usage
-usage="Usage: install_vorbe.sh [options]
+usage="Usage: install_orbit.sh [options]
    --clean          Clean previous installation (remove all traces) with parameters specified in vorbe.cfg
    --save-base-vm   Save base vm - used for cloning any virtual node
    --skip-base-vm   Use a saved base vm - with name specified in vorbe.cfg
@@ -55,8 +55,8 @@ done
 #
 #======================================================================
 # Prog Name
-prog_name="Virtual Openstack RedHat-based Environment"
-prog_sigla="VORbE"
+prog_name="A Virtual Openstack RedHat-based Environment"
+prog_sigla="orbit"
 # Checkpoint variable for cleanup function
 checkpoint=0 
 
@@ -73,7 +73,7 @@ SOK="\e[0;32m[ OK ]\e[0m"
 SFAILED="\e[0;31m[ FAILED ]\e[0m"
 
 # Log function
-log_file="install_vorbe.log"
+log_file="orbit.log"
 echo "" > $log_file
 
 log_tag="\e[0;36m[$prog_sigla]\e[0m"
@@ -99,7 +99,7 @@ function promptyn {
 
 # Pointer to file loader script - takes the current path as argument
 config_files="src/config/file-tree.sh"
-user_config="$(pwd -P)/vorbe.cfg"
+user_config="$(pwd -P)/orbit.conf"
 
 echo ""
 echo -e "$prog_sigla: $prog_name starting on $(date)" | tee --append $log_file
