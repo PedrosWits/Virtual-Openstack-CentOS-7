@@ -60,3 +60,4 @@ ssh_key_name="orbit-key"
 
 # NTP servers
 ntp_servers_list="ntp01.fccn.pt,ntp02.fccn.pt"
+checkpoint=3

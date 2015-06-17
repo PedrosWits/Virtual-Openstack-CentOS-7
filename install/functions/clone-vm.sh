@@ -29,6 +29,7 @@ if [ -z $5 ]
 fi
 
 virt-clone \
+  --force \
   --connect $kvm_uri \
   --original $old_name \
   --name $new_name \
