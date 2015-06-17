@@ -716,15 +716,6 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_PROVISION_DEMO n"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VLAN_RANGES physnet1"
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS physnet1:br-eth1"
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_IFACES br-eth1:eth1"
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_eth0 \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF eth1"
 
 ok
