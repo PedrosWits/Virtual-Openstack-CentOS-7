@@ -185,8 +185,7 @@ function cleanup {
    ELAPSED_TIME_MILLI=$((($END_TIME-$START_TIME)/1000000))
    ELAPSED_TIME_SEC=$(($ELAPSED_TIME_MILLI/1000))
    ELAPSED_TIME_MIN=$(($ELAPSED_TIME_SEC/60))
-   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m \
-	$((${ELAPSED_TIME_SEC} - ${ELAPSED_TIME_MIN}*60))s" | tee --append $log_file
+   echo -e "$log_tag Elapsed Time: ${ELAPSED_TIME_MIN}m $((${ELAPSED_TIME_SEC} - ${ELAPSED_TIME_MIN}*60))s" | tee --append $log_file
 }
 # Define trap
 trap cleanup EXIT SIGHUP SIGINT SIGTERM
@@ -795,24 +794,24 @@ ok
 
 #4.b - OVS configuration on network-node
 
-log "Configure interface eth2 on the Network VM as a OVS-port.. "
+#log "Configure interface eth2 on the Network VM as a OVS-port.. "
 
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"sudo truncate -s 0 /etc/sysconfig/network-scripts/ifcfg-eth2" 
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"sudo truncate -s 0 /etc/sysconfig/network-scripts/ifcfg-eth2" 
 
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'DEVICE=\"eth2\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'ONBOOT=\"yes\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'TYPE=\"OVSPort\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'DEVICETYPE=\"ovs\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'OVS_BRIDGE=br-ex' | tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'BOOTPROTO=\"none\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-ok
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"echo 'DEVICE=\"eth2\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"echo 'ONBOOT=\"yes\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"echo 'TYPE=\"OVSPort\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"echo 'DEVICETYPE=\"ovs\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"echo 'OVS_BRIDGE=br-ex' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"echo 'BOOTPROTO=\"none\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+#ok
 
 #log "Configure interface br-ex on the Network VM as a OVS-bridge.. "
 #
@@ -840,10 +839,10 @@ ok
 #ok
 
 # last: service network restart
-log "Restart the network service on the Network VM.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"sudo service network restart"
-ok
+#log "Restart the network service on the Network VM.. "
+#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
+#"sudo service network restart"
+#ok
 #======================================================================
 #
 # 5. Install Rally and gather benchmarking data
