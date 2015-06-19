@@ -1,0 +1,1316 @@
+t] Cleaning up previous installation, with variables read from '/home/psilva/openstack-orbit/install/orbit.last-install'..
+Network orbit-tunnels destroyed
+
+Network orbit-tunnels has been undefined
+
+Network orbit-management destroyed
+
+Network orbit-management has been undefined
+
+Network orbit-external destroyed
+
+Network orbit-external has been undefined
+
+Domain orbit-controller destroyed
+
+Domain orbit-controller has been undefined
+Wiping volume 'vda'(/var/lib/libvirt/images/orbit-controller.img) ... Done.
+Volume 'vda'(/var/lib/libvirt/images/orbit-controller.img) removed.
+
+Domain orbit-network destroyed
+
+Domain orbit-network has been undefined
+Wiping volume 'vda'(/var/lib/libvirt/images/orbit-network.img) ... Done.
+Volume 'vda'(/var/lib/libvirt/images/orbit-network.img) removed.
+
+Domain orbit-compute1 destroyed
+
+Domain orbit-compute1 has been undefined
+Wiping volume 'vda'(/var/lib/libvirt/images/orbit-compute1.img) ... Done.
+Volume 'vda'(/var/lib/libvirt/images/orbit-compute1.img) removed.
+
+# Host 10.0.0.11 found: line 1 type RSA
+/home/psilva/.ssh/known_hosts updated.
+Original contents retained as /home/psilva/.ssh/known_hosts.old
+# Host 10.0.0.21 found: line 1 type RSA
+/home/psilva/.ssh/known_hosts updated.
+Original contents retained as /home/psilva/.ssh/known_hosts.old
+# Host 10.0.0.31 found: line 1 type RSA
+/home/psilva/.ssh/known_hosts updated.
+Original contents retained as /home/psilva/.ssh/known_hosts.old
+[ OK ]
+[orbit] Elapsed Time: 0m 7s
+[psilva@cracs-cloud01 install]$ ./install_orbit.sh --debug --skip-base-vm
+[orbit] Load variables from user-editable file - /home/psilva/openstack-orbit/install/orbit.conf..
+[ OK ]
+
+orbit: A Virtual Openstack RedHat-based Environment starting on Qui Jun 18 00:24:56 WEST 2015
+[orbit] #==================================================================#
+[orbit] Load file names and structure..
+[ OK ]
+[orbit] Check if virtualization is enabled..
+[ OK ]
+[orbit] Generate MACs..
+[ OK ]
+[orbit] Check if required software is installed..
+[ OK ]
+[orbit] Test if name 'orbit-management' is available for creating the management network..
+error: failed to get network 'orbit-management'
+error: Network not found: no network with matching name 'orbit-management'
+
+[ OK ]
+[orbit] Test if name 'orbit-tunnels' is available for creating the data network..
+error: failed to get network 'orbit-tunnels'
+error: Network not found: no network with matching name 'orbit-tunnels'
+
+[ OK ]
+[orbit] Test if name 'orbit-external' is available for creating the external network..
+error: failed to get network 'orbit-external'
+error: Network not found: no network with matching name 'orbit-external'
+
+[ OK ]
+[orbit] Read empty xml templates into temporary files..
+<network>
+  <name></name>
+  <bridge name=''/>
+  <ip address='' netmask=''>
+     <dhcp>
+          <range start='' end=''/>
+    </dhcp>
+  </ip>
+</network>
+<network>
+  <name></name>
+  <bridge name=''/>
+  <forward mode='nat'>
+     <nat>
+        <port start='1024' end='65535'/>
+     </nat>
+  </forward>
+  <ip address='' netmask=''>
+     <dhcp>
+          <range start='' end=''/>
+    </dhcp>
+  </ip>
+</network>
+<network>
+  <name></name>
+  <bridge name=''/>
+  <forward mode='nat'>
+     <nat>
+        <port start='1024' end='65535'/>
+     </nat>
+  </forward>
+  <ip address='' netmask=''>
+     <dhcp>
+          <range start='' end=''/>
+    </dhcp>
+  </ip>
+</network>
+[ OK ]
+[orbit] Writing xml files according to configuration file..
+[ OK ]
+[orbit] Create and start the network orbit-management..
+Network orbit-management defined from /home/psilva/openstack-orbit/install/orbit_management_network.xml
+
+Network orbit-management started
+
+Network orbit-management marked as autostarted
+
+[ OK ]
+[orbit] Create and start the network orbit-tunnels..
+Network orbit-tunnels defined from /home/psilva/openstack-orbit/install/orbit_data_network.xml
+
+Network orbit-tunnels started
+
+Network orbit-tunnels marked as autostarted
+
+[ OK ]
+[orbit] Create and start the network orbit-external..
+Network orbit-external defined from /home/psilva/openstack-orbit/install/orbit_external_network.xml
+
+Network orbit-external started
+
+Network orbit-external marked as autostarted
+
+[ OK ]
+[orbit] Cloning base vm into controller vm..
+Allocating 'orbit-controller.img'                                                                       |  12 GB  00:00:04
+
+Clone 'orbit-controller' created successfully.
+[ OK ]
+[orbit] Cloning base vm into network vm..
+Allocating 'orbit-network.img'                                                                          |  12 GB  00:00:04
+
+Clone 'orbit-network' created successfully.
+[ OK ]
+[orbit] Cloning base vm into compute1 vm..
+Allocating 'orbit-compute1.img'                                                                         |  12 GB  00:00:04
+
+Clone 'orbit-compute1' created successfully.
+[ OK ]
+[orbit] Starting VMs - Write HWADDR in ifcfg-eth0 with first-boot..
+Domain orbit-controller started
+
+Domain orbit-network started
+
+Domain orbit-compute1 started
+
+[ OK ]
+[orbit] Waiting 30 seconds for vms to start and perform first-boot script safely..
+[ OK ]
+[orbit] Shutting down VMs for offline network configuration..
+Domain orbit-controller is being shutdown
+
+Domain orbit-network is being shutdown
+
+Domain orbit-compute1 is being shutdown
+
+[ OK ]
+[orbit] Waiting 30 seconds for vms to shutdown safely..
+[ OK ]
+[orbit] Adding network-interfaces for orbit-tunnels network in network and compute1 nodes..
+Interface attached successfully
+
+Interface attached successfully
+
+Interface attached successfully
+
+[ OK ]
+[orbit] Re-starting the VMs..
+Domain orbit-controller started
+
+Domain orbit-network started
+
+Domain orbit-compute1 started
+
+[ OK ]
+[orbit] Waiting 30 seconds for vms to start safely..
+[ OK ]
+[orbit] Check if 'sshpass' is installed..
+[ OK ]
+[orbit] Generate ssh key for accessing the VMs automatically..
+[orbit]
+A ssh key with the name 'orbit-key' already exists. Using the existing one..
+[ OK ]
+[orbit] Test if given Ips are available in the list of known_hosts..
+[ OK ]
+[orbit] Add VMs to the list of known_hosts, by using key-scan..
+# 10.0.0.11 SSH-2.0-OpenSSH_6.6.1
+# 10.0.0.11 SSH-2.0-OpenSSH_6.6.1
+no hostkey alg
+# 10.0.0.21 SSH-2.0-OpenSSH_6.6.1
+# 10.0.0.21 SSH-2.0-OpenSSH_6.6.1
+no hostkey alg
+# 10.0.0.31 SSH-2.0-OpenSSH_6.6.1
+no hostkey alg
+# 10.0.0.31 SSH-2.0-OpenSSH_6.6.1
+[ OK ]
+[orbit] Set SSHPASS environment variable for non-interactive ssh-copy-id. Read pass from user.cfg..
+[ OK ]
+[orbit] Install the keys onto the VMs..
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'admin@10.0.0.11'"
+and check to make sure that only the key(s) you wanted were added.
+
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'admin@10.0.0.21'"
+and check to make sure that only the key(s) you wanted were added.
+
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'admin@10.0.0.31'"
+and check to make sure that only the key(s) you wanted were added.
+
+[ OK ]
+[orbit] Check if ssh-configuration was successfull..
+[ OK ]
+[orbit] Configure data network on VMs - eth1 on Network VM..
+UUID="fc63ca8b-6da3-47bf-bfbb-7816d76ddd2f"
+DNS1=10.0.0.1
+
+Determining IP information for eth1... done.
+[ OK ]
+[orbit] Configure data network on VMs - eth2 on Network VM..
+UUID="74aae49c-a746-4418-98e2-f4d1c0f25aa2"
+DNS1=172.16.16.1
+
+Determining IP information for eth2... done.
+[ OK ]
+[orbit] Configure data network on VMs - eth1 on Compute1 VM..
+UUID="4db84d44-0065-4cf2-8598-15884d5d332a"
+DNS1=10.0.0.1
+
+Determining IP information for eth1... done.
+[ OK ]
+[orbit] Verify that VMs have internet connection..
+PING www.google.com (216.58.210.164) 56(84) bytes of data.
+64 bytes from mad06s10-in-f164.1e100.net (216.58.210.164): icmp_seq=1 ttl=53 time=23.0 ms
+64 bytes from mad06s10-in-f164.1e100.net (216.58.210.164): icmp_seq=2 ttl=53 time=20.8 ms
+
+--- www.google.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1001ms
+rtt min/avg/max/mdev = 20.899/21.953/23.007/1.054 ms
+PING www.google.com (216.58.210.164) 56(84) bytes of data.
+64 bytes from mad06s10-in-f4.1e100.net (216.58.210.164): icmp_seq=1 ttl=53 time=20.9 ms
+64 bytes from mad06s10-in-f164.1e100.net (216.58.210.164): icmp_seq=2 ttl=53 time=20.9 ms
+
+--- www.google.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 20.920/20.934/20.949/0.145 ms
+PING www.google.com (216.58.210.164) 56(84) bytes of data.
+64 bytes from mad06s10-in-f164.1e100.net (216.58.210.164): icmp_seq=1 ttl=53 time=21.1 ms
+64 bytes from mad06s10-in-f164.1e100.net (216.58.210.164): icmp_seq=2 ttl=53 time=20.9 ms
+
+--- www.google.com ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 20.983/21.043/21.104/0.157 ms
+[ OK ]
+[orbit] Take snapshots of VMs after fresh clone..
+Domain snapshot fresh_clone created
+Domain snapshot fresh_clone created
+Domain snapshot fresh_clone created
+[ OK ]
+[orbit] Configure and start the ntp service - Controller VM..
+ln -s '/usr/lib/systemd/system/ntpd.service' '/etc/systemd/system/multi-user.target.wants/ntpd.service'
+[ OK ]
+[orbit] Configure and start the ntp service - Network VM..
+ln -s '/usr/lib/systemd/system/ntpd.service' '/etc/systemd/system/multi-user.target.wants/ntpd.service'
+[ OK ]
+[orbit] Configure and start the ntp service - Compute1 VM..
+ln -s '/usr/lib/systemd/system/ntpd.service' '/etc/systemd/system/multi-user.target.wants/ntpd.service'
+[ OK ]
+[orbit] Installing repository on Controller..
+[ OK ]
+[orbit] Installing packstack..
+warning: /var/cache/yum/x86_64/7/openstack-kilo/packages/openstack-packstack-puppet-2015.1-0.1.dev1537.gba5183c.el7.noarch.rpm: Header V4 RSA/SHA1 Signature, key ID 7d10ce81: NOKEY
+Public key for openstack-packstack-puppet-2015.1-0.1.dev1537.gba5183c.el7.noarch.rpm is not installed
+Importing GPG key 0x7D10CE81:
+ Userid     : "rdo-kilo-sign <rdo-info@redhat.com>"
+ Fingerprint: a4eb 1b57 d1b2 1c66 e020 39e2 52f8 c4c3 7d10 ce81
+ Package    : rdo-release-kilo-1.noarch (@/rdo-release)
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-RDO-kilo
+[ OK ]
+[orbit] Generate the answers file using packstack..
+Packstack changed given value  to required value /home/admin/.ssh/id_rsa.pub
+[ OK ]
+[orbit] Edit answers file according to our configuration: vms ips, ntp servers, etc..
+[ OK ]
+[orbit] Install ssh key in root users, for automating required priveleged packstack installation..
+# 10.0.0.21 SSH-2.0-OpenSSH_6.6.1
+# 10.0.0.21 SSH-2.0-OpenSSH_6.6.1
+no hostkey alg
+# 10.0.0.31 SSH-2.0-OpenSSH_6.6.1
+# 10.0.0.31 SSH-2.0-OpenSSH_6.6.1
+no hostkey alg
+warning: /var/tmp/rpm-tmp.ZR28Dx: Header V3 DSA/SHA1 Signature, key ID 6b8d79e6: NOKEY
+Retrieving http://pkgs.repoforge.org/sshpass/sshpass-1.05-1.el7.rf.x86_64.rpm
+Preparing...                          ########################################
+Updating / installing...
+sshpass-1.05-1.el7.rf                 ########################################
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDBrYqhPwa1UNLo8fzVXBqFtzersoubr+Wb5qrv2ywX/kBrcsyPc5cYeTKu/gkKEWxfqCw4kSwJG5McFD+QzcrsC/+iI0PLqdT6/IkwjlomQaAjHSRTm6TVeq3mgXNde+qbD6wpxwMAbu95WNtz4Vbf0HrQB+5wBW8KALELGc4Ke8tcC/Bp5QqDB2J6qMiReKvHF2+w1nvDCDVWR41m0ANd+6vg5bpxgJlxHqNjBza0eu8tPl6jUXasWbA3vbs7ufcXq7bNMv7AhDhsOVoYIzx12tZh+das672Utua18K23agpnYt/gctiPbbfCdsEGRP/9COFWCgHuMYqI3KALsAtv admin@orbit-controller
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@10.0.0.21'"
+and check to make sure that only the key(s) you wanted were added.
+
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: INFO: 1 key(s) remain to be installed -- if you are prompted now it is to install the new keys
+
+Number of key(s) added: 1
+
+Now try logging into the machine, with:   "ssh 'root@10.0.0.31'"
+and check to make sure that only the key(s) you wanted were added.
+
+[ OK ]
+[orbit] Running packstack with configured values - this may take a while..
+Welcome to the Packstack setup utility
+
+The installation log file is available at: /var/tmp/packstack/20150617-232802-QVc45P/openstack-setup.log
+
+Installing:
+Clean Up                                             [ DONE ]
+Discovering ip protocol version                      [ DONE ]
+Setting up ssh keys                                  [ DONE ]
+Preparing servers                                    [ DONE ]
+Preinstalling Puppet and discovering hosts' details  [ DONE ]
+Adding pre install manifest entries                  [ DONE ]
+Adding AMQP manifest entries                         [ DONE ]
+Adding MariaDB manifest entries                      [ DONE ]
+Fixing Keystone LDAP config parameters to be undef if empty[ DONE ]
+Adding Keystone manifest entries                     [ DONE ]
+Adding Glance Keystone manifest entries              [ DONE ]
+Adding Glance manifest entries                       [ DONE ]
+Adding Cinder Keystone manifest entries              [ DONE ]
+Checking if the Cinder server has a cinder-volumes vg[ DONE ]
+Adding Cinder manifest entries                       [ DONE ]
+Adding Nova API manifest entries                     [ DONE ]
+Adding Nova Keystone manifest entries                [ DONE ]
+Adding Nova Cert manifest entries                    [ DONE ]
+Adding Nova Conductor manifest entries               [ DONE ]
+Creating ssh keys for Nova migration                 [ DONE ]
+Gathering ssh host keys for Nova migration           [ DONE ]
+Adding Nova Compute manifest entries                 [ DONE ]
+Adding Nova Scheduler manifest entries               [ DONE ]
+Adding Nova VNC Proxy manifest entries               [ DONE ]
+Adding OpenStack Network-related Nova manifest entries[ DONE ]
+Adding Nova Common manifest entries                  [ DONE ]
+Adding Neutron API manifest entries                  [ DONE ]
+Adding Neutron Keystone manifest entries             [ DONE ]
+Adding Neutron L3 manifest entries                   [ DONE ]
+Adding Neutron L2 Agent manifest entries             [ DONE ]
+Adding Neutron DHCP Agent manifest entries           [ DONE ]
+Adding Neutron FWaaS Agent manifest entries          [ DONE ]
+Adding Neutron LBaaS Agent manifest entries          [ DONE ]
+Adding Neutron Metering Agent manifest entries       [ DONE ]
+Adding Neutron Metadata Agent manifest entries       [ DONE ]
+Checking if NetworkManager is enabled and running    [ DONE ]
+Adding OpenStack Client manifest entries             [ DONE ]
+Adding Horizon manifest entries                      [ DONE ]
+Adding Swift Keystone manifest entries               [ DONE ]
+Adding Swift builder manifest entries                [ DONE ]
+Adding Swift proxy manifest entries                  [ DONE ]
+Adding Swift storage manifest entries                [ DONE ]
+Adding Swift common manifest entries                 [ DONE ]
+Adding MongoDB manifest entries                      [ DONE ]
+Adding Redis manifest entries                        [ DONE ]
+Adding Ceilometer manifest entries                   [ DONE ]
+Adding Ceilometer Keystone manifest entries          [ DONE ]
+Adding Nagios server manifest entries                [ DONE ]
+Adding Nagios host manifest entries                  [ DONE ]
+Adding post install manifest entries                 [ DONE ]
+Copying Puppet modules and manifests                 [ DONE ]
+Applying 10.0.0.31_prescript.pp
+Applying 10.0.0.11_prescript.pp
+Applying 10.0.0.21_prescript.pp
+10.0.0.31_prescript.pp:                              [ DONE ]
+10.0.0.21_prescript.pp:                              [ DONE ]
+10.0.0.11_prescript.pp:                              [ DONE ]
+Applying 10.0.0.11_amqp.pp
+Applying 10.0.0.11_mariadb.pp
+10.0.0.11_amqp.pp:                                   [ DONE ]
+10.0.0.11_mariadb.pp:                                [ DONE ]
+Applying 10.0.0.11_keystone.pp
+Applying 10.0.0.11_glance.pp
+Applying 10.0.0.11_cinder.pp
+10.0.0.11_keystone.pp:                               [ DONE ]
+10.0.0.11_glance.pp:                                 [ DONE ]
+10.0.0.11_cinder.pp:                                 [ DONE ]
+Applying 10.0.0.11_api_nova.pp
+10.0.0.11_api_nova.pp:                               [ DONE ]
+Applying 10.0.0.11_nova.pp
+Applying 10.0.0.31_nova.pp
+10.0.0.11_nova.pp:                                   [ DONE ]
+10.0.0.31_nova.pp:                                   [ DONE ]
+Applying 10.0.0.31_neutron.pp
+Applying 10.0.0.11_neutron.pp
+Applying 10.0.0.21_neutron.pp
+10.0.0.31_neutron.pp:                                [ DONE ]
+10.0.0.11_neutron.pp:                                [ DONE ]
+10.0.0.21_neutron.pp:                                [ DONE ]
+Applying 10.0.0.11_osclient.pp
+Applying 10.0.0.11_horizon.pp
+10.0.0.11_osclient.pp:                               [ DONE ]
+10.0.0.11_horizon.pp:                                [ DONE ]
+Applying 10.0.0.11_ring_swift.pp
+10.0.0.11_ring_swift.pp:                             [ DONE ]
+Applying 10.0.0.11_swift.pp
+10.0.0.11_swift.pp:                                  [ DONE ]
+Applying 10.0.0.11_mongodb.pp
+Applying 10.0.0.11_redis.pp
+10.0.0.11_mongodb.pp:                                [ DONE ]
+10.0.0.11_redis.pp:                                  [ DONE ]
+Applying 10.0.0.11_ceilometer.pp
+10.0.0.11_ceilometer.pp:                             [ DONE ]
+Applying 10.0.0.11_nagios.pp
+Applying 10.0.0.31_nagios_nrpe.pp
+Applying 10.0.0.11_nagios_nrpe.pp
+Applying 10.0.0.21_nagios_nrpe.pp
+10.0.0.31_nagios_nrpe.pp:                            [ DONE ]
+10.0.0.21_nagios_nrpe.pp:                            [ DONE ]
+10.0.0.11_nagios.pp:                                 [ DONE ]
+10.0.0.11_nagios_nrpe.pp:                            [ DONE ]
+Applying 10.0.0.31_postscript.pp
+Applying 10.0.0.11_postscript.pp
+Applying 10.0.0.21_postscript.pp
+10.0.0.31_postscript.pp:                             [ DONE ]
+10.0.0.21_postscript.pp:                             [ DONE ]
+10.0.0.11_postscript.pp:                             [ DONE ]
+Applying Puppet manifests                            [ DONE ]
+Finalizing                                           [ DONE ]
+
+ **** Installation completed successfully ******
+
+Additional information:
+ * Time synchronization installation was skipped. Please note that unsynchronized time on server instances might be problem for some OpenStack components.
+ * File /root/keystonerc_admin has been created on OpenStack client host 10.0.0.11. To use the command line tools you need to source the file.
+ * Copy of keystonerc_admin file has been created for non-root user in /home/admin.
+ * To access the OpenStack Dashboard browse to http://10.0.0.11/dashboard .
+Please, find your login credentials stored in the keystonerc_admin in your home directory.
+ * To use Nagios, browse to http://10.0.0.11/nagios username: nagiosadmin, password: 22ffed83a7ac4f17
+ * The installation log file is available at: /var/tmp/packstack/20150617-232802-QVc45P/openstack-setup.log
+ * The generated manifests are available at: /var/tmp/packstack/20150617-232802-QVc45P/manifests
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: ftp.up.pt
+ * epel: ftp.up.pt
+ * extras: centos.mirror.ptisp.pt
+ * updates: centos.mirror.ptisp.pt
+Resolving Dependencies
+--> Running transaction check
+---> Package crudini.noarch 0:0.4-1.el7 will be updated
+---> Package crudini.noarch 0:0.5-1.el7 will be an update
+---> Package sshpass.x86_64 0:1.05-1.el7.rf will be updated
+---> Package sshpass.x86_64 0:1.05-5.el7 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package           Arch             Version                Repository      Size
+================================================================================
+Updating:
+ crudini           noarch           0.5-1.el7              epel            22 k
+ sshpass           x86_64           1.05-5.el7             epel            21 k
+
+Transaction Summary
+================================================================================
+Upgrade  2 Packages
+
+Total download size: 43 k
+Downloading packages:
+Delta RPMs disabled because /usr/bin/applydeltarpm not installed.
+--------------------------------------------------------------------------------
+Total                                              104 kB/s |  43 kB  00:00
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Updating   : sshpass-1.05-5.el7.x86_64                                    1/4
+  Updating   : crudini-0.5-1.el7.noarch                                     2/4
+  Cleanup    : crudini-0.4-1.el7.noarch                                     3/4
+  Cleanup    : sshpass-1.05-1.el7.rf.x86_64                                 4/4
+  Verifying  : crudini-0.5-1.el7.noarch                                     1/4
+  Verifying  : sshpass-1.05-5.el7.x86_64                                    2/4
+  Verifying  : crudini-0.4-1.el7.noarch                                     3/4
+  Verifying  : sshpass-1.05-1.el7.rf.x86_64                                 4/4
+
+Updated:
+  crudini.noarch 0:0.5-1.el7             sshpass.x86_64 0:1.05-5.el7
+
+Complete!
+[ OK ]
+[orbit] Performing recommended reboot after packstack install..
+Domain orbit-controller is being rebooted
+
+Domain orbit-network is being rebooted
+
+Domain orbit-compute1 is being rebooted
+
+[ OK ]
+[orbit] Waiting 30 seconds for safe reboot..
+[ OK ]
+[orbit] Take snapshots of VMs after successful openstack install..
+Domain snapshot ok_openstack_install created
+Domain snapshot ok_openstack_install created
+Domain snapshot ok_openstack_install created
+[ OK ]
+[orbit] Install Rally - dependencies..
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: ftp.up.pt
+ * epel: ftp.up.pt
+ * extras: centos.mirror.ptisp.pt
+ * updates: centos.mirror.ptisp.pt
+Resolving Dependencies
+--> Running transaction check
+---> Package gcc.x86_64 0:4.8.3-9.el7 will be installed
+--> Processing Dependency: cpp = 4.8.3-9.el7 for package: gcc-4.8.3-9.el7.x86_64
+--> Processing Dependency: glibc-devel >= 2.2.90-12 for package: gcc-4.8.3-9.el7.x86_64
+--> Processing Dependency: libmpfr.so.4()(64bit) for package: gcc-4.8.3-9.el7.x86_64
+--> Processing Dependency: libmpc.so.3()(64bit) for package: gcc-4.8.3-9.el7.x86_64
+---> Package git.x86_64 0:1.8.3.1-4.el7 will be installed
+--> Processing Dependency: perl-Git = 1.8.3.1-4.el7 for package: git-1.8.3.1-4.el7.x86_64
+--> Processing Dependency: perl(Term::ReadKey) for package: git-1.8.3.1-4.el7.x86_64
+--> Processing Dependency: perl(Git) for package: git-1.8.3.1-4.el7.x86_64
+--> Processing Dependency: perl(Error) for package: git-1.8.3.1-4.el7.x86_64
+--> Processing Dependency: libgnome-keyring.so.0()(64bit) for package: git-1.8.3.1-4.el7.x86_64
+---> Package gmp-devel.x86_64 1:6.0.0-11.el7 will be installed
+---> Package libffi-devel.x86_64 0:3.0.13-11.el7 will be installed
+---> Package libxml2-devel.x86_64 0:2.9.1-5.el7_1.2 will be installed
+--> Processing Dependency: zlib-devel for package: libxml2-devel-2.9.1-5.el7_1.2.x86_64
+--> Processing Dependency: xz-devel for package: libxml2-devel-2.9.1-5.el7_1.2.x86_64
+---> Package libxslt-devel.x86_64 0:1.1.28-5.el7 will be installed
+--> Processing Dependency: libgcrypt-devel for package: libxslt-devel-1.1.28-5.el7.x86_64
+---> Package openssl-devel.x86_64 1:1.0.1e-42.el7.8 will be installed
+--> Processing Dependency: krb5-devel(x86-64) for package: 1:openssl-devel-1.0.1e-42.el7.8.x86_64
+---> Package postgresql-devel.x86_64 0:9.2.10-2.el7_1 will be installed
+--> Processing Dependency: postgresql-libs(x86-64) = 9.2.10-2.el7_1 for package: postgresql-devel-9.2.10-2.el7_1.x86_64
+--> Processing Dependency: postgresql(x86-64) = 9.2.10-2.el7_1 for package: postgresql-devel-9.2.10-2.el7_1.x86_64
+--> Processing Dependency: libpq.so.5()(64bit) for package: postgresql-devel-9.2.10-2.el7_1.x86_64
+--> Processing Dependency: libpgtypes.so.3()(64bit) for package: postgresql-devel-9.2.10-2.el7_1.x86_64
+--> Processing Dependency: libecpg_compat.so.3()(64bit) for package: postgresql-devel-9.2.10-2.el7_1.x86_64
+--> Processing Dependency: libecpg.so.6()(64bit) for package: postgresql-devel-9.2.10-2.el7_1.x86_64
+--> Running transaction check
+---> Package cpp.x86_64 0:4.8.3-9.el7 will be installed
+---> Package glibc-devel.x86_64 0:2.17-78.el7 will be installed
+--> Processing Dependency: glibc-headers = 2.17-78.el7 for package: glibc-devel-2.17-78.el7.x86_64
+--> Processing Dependency: glibc-headers for package: glibc-devel-2.17-78.el7.x86_64
+---> Package krb5-devel.x86_64 0:1.12.2-14.el7 will be installed
+--> Processing Dependency: libverto-devel for package: krb5-devel-1.12.2-14.el7.x86_64
+--> Processing Dependency: libselinux-devel for package: krb5-devel-1.12.2-14.el7.x86_64
+--> Processing Dependency: libcom_err-devel for package: krb5-devel-1.12.2-14.el7.x86_64
+--> Processing Dependency: keyutils-libs-devel for package: krb5-devel-1.12.2-14.el7.x86_64
+---> Package libgcrypt-devel.x86_64 0:1.5.3-12.el7_1.1 will be installed
+--> Processing Dependency: libgpg-error-devel for package: libgcrypt-devel-1.5.3-12.el7_1.1.x86_64
+---> Package libgnome-keyring.x86_64 0:3.8.0-3.el7 will be installed
+---> Package libmpc.x86_64 0:1.0.1-3.el7 will be installed
+---> Package mpfr.x86_64 0:3.1.1-4.el7 will be installed
+---> Package perl-Error.noarch 1:0.17020-2.el7 will be installed
+---> Package perl-Git.noarch 0:1.8.3.1-4.el7 will be installed
+---> Package perl-TermReadKey.x86_64 0:2.30-20.el7 will be installed
+---> Package postgresql.x86_64 0:9.2.10-2.el7_1 will be installed
+---> Package postgresql-libs.x86_64 0:9.2.10-2.el7_1 will be installed
+---> Package xz-devel.x86_64 0:5.1.2-9alpha.el7 will be installed
+---> Package zlib-devel.x86_64 0:1.2.7-13.el7 will be installed
+--> Running transaction check
+---> Package glibc-headers.x86_64 0:2.17-78.el7 will be installed
+--> Processing Dependency: kernel-headers >= 2.2.1 for package: glibc-headers-2.17-78.el7.x86_64
+--> Processing Dependency: kernel-headers for package: glibc-headers-2.17-78.el7.x86_64
+---> Package keyutils-libs-devel.x86_64 0:1.5.8-3.el7 will be installed
+---> Package libcom_err-devel.x86_64 0:1.42.9-7.el7 will be installed
+---> Package libgpg-error-devel.x86_64 0:1.12-3.el7 will be installed
+---> Package libselinux-devel.x86_64 0:2.2.2-6.el7 will be installed
+--> Processing Dependency: libsepol-devel >= 2.1.9-1 for package: libselinux-devel-2.2.2-6.el7.x86_64
+--> Processing Dependency: pkgconfig(libsepol) for package: libselinux-devel-2.2.2-6.el7.x86_64
+--> Processing Dependency: pkgconfig(libpcre) for package: libselinux-devel-2.2.2-6.el7.x86_64
+---> Package libverto-devel.x86_64 0:0.2.5-4.el7 will be installed
+--> Running transaction check
+---> Package kernel-headers.x86_64 0:3.10.0-229.4.2.el7 will be installed
+---> Package libsepol-devel.x86_64 0:2.1.9-3.el7 will be installed
+---> Package pcre-devel.x86_64 0:8.32-14.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package                 Arch       Version                   Repository   Size
+================================================================================
+Installing:
+ gcc                     x86_64     4.8.3-9.el7               base         16 M
+ git                     x86_64     1.8.3.1-4.el7             base        4.3 M
+ gmp-devel               x86_64     1:6.0.0-11.el7            base        180 k
+ libffi-devel            x86_64     3.0.13-11.el7             base         22 k
+ libxml2-devel           x86_64     2.9.1-5.el7_1.2           updates     1.0 M
+ libxslt-devel           x86_64     1.1.28-5.el7              base        309 k
+ openssl-devel           x86_64     1:1.0.1e-42.el7.8         updates     1.2 M
+ postgresql-devel        x86_64     9.2.10-2.el7_1            updates     946 k
+Installing for dependencies:
+ cpp                     x86_64     4.8.3-9.el7               base        5.9 M
+ glibc-devel             x86_64     2.17-78.el7               base        1.0 M
+ glibc-headers           x86_64     2.17-78.el7               base        656 k
+ kernel-headers          x86_64     3.10.0-229.4.2.el7        updates     2.3 M
+ keyutils-libs-devel     x86_64     1.5.8-3.el7               base         37 k
+ krb5-devel              x86_64     1.12.2-14.el7             base        640 k
+ libcom_err-devel        x86_64     1.42.9-7.el7              base         30 k
+ libgcrypt-devel         x86_64     1.5.3-12.el7_1.1          updates     129 k
+ libgnome-keyring        x86_64     3.8.0-3.el7               base        109 k
+ libgpg-error-devel      x86_64     1.12-3.el7                base         16 k
+ libmpc                  x86_64     1.0.1-3.el7               base         51 k
+ libselinux-devel        x86_64     2.2.2-6.el7               base        174 k
+ libsepol-devel          x86_64     2.1.9-3.el7               base         71 k
+ libverto-devel          x86_64     0.2.5-4.el7               base         12 k
+ mpfr                    x86_64     3.1.1-4.el7               base        203 k
+ pcre-devel              x86_64     8.32-14.el7               base        477 k
+ perl-Error              noarch     1:0.17020-2.el7           base         32 k
+ perl-Git                noarch     1.8.3.1-4.el7             base         52 k
+ perl-TermReadKey        x86_64     2.30-20.el7               base         31 k
+ postgresql              x86_64     9.2.10-2.el7_1            updates     3.0 M
+ postgresql-libs         x86_64     9.2.10-2.el7_1            updates     230 k
+ xz-devel                x86_64     5.1.2-9alpha.el7          base         44 k
+ zlib-devel              x86_64     1.2.7-13.el7              base         49 k
+
+Transaction Summary
+================================================================================
+Install  8 Packages (+23 Dependent packages)
+
+Total download size: 39 M
+Installed size: 119 M
+Downloading packages:
+--------------------------------------------------------------------------------
+Total                                              5.0 MB/s |  39 MB  00:07
+Running transaction check
+Running transaction test
+Transaction test succeeded
+Running transaction
+  Installing : mpfr-3.1.1-4.el7.x86_64                                     1/31
+  Installing : libmpc-1.0.1-3.el7.x86_64                                   2/31
+  Installing : zlib-devel-1.2.7-13.el7.x86_64                              3/31
+  Installing : 1:perl-Error-0.17020-2.el7.noarch                           4/31
+  Installing : postgresql-libs-9.2.10-2.el7_1.x86_64                       5/31
+  Installing : postgresql-9.2.10-2.el7_1.x86_64                            6/31
+  Installing : cpp-4.8.3-9.el7.x86_64                                      7/31
+  Installing : libcom_err-devel-1.42.9-7.el7.x86_64                        8/31
+  Installing : libgpg-error-devel-1.12-3.el7.x86_64                        9/31
+  Installing : libgcrypt-devel-1.5.3-12.el7_1.1.x86_64                    10/31
+  Installing : libgnome-keyring-3.8.0-3.el7.x86_64                        11/31
+  Installing : kernel-headers-3.10.0-229.4.2.el7.x86_64                   12/31
+  Installing : glibc-headers-2.17-78.el7.x86_64                           13/31
+  Installing : glibc-devel-2.17-78.el7.x86_64                             14/31
+  Installing : xz-devel-5.1.2-9alpha.el7.x86_64                           15/31
+  Installing : libxml2-devel-2.9.1-5.el7_1.2.x86_64                       16/31
+  Installing : libsepol-devel-2.1.9-3.el7.x86_64                          17/31
+  Installing : perl-TermReadKey-2.30-20.el7.x86_64                        18/31
+  Installing : git-1.8.3.1-4.el7.x86_64                                   19/31
+  Installing : perl-Git-1.8.3.1-4.el7.noarch                              20/31
+  Installing : libverto-devel-0.2.5-4.el7.x86_64                          21/31
+  Installing : pcre-devel-8.32-14.el7.x86_64                              22/31
+  Installing : libselinux-devel-2.2.2-6.el7.x86_64                        23/31
+  Installing : keyutils-libs-devel-1.5.8-3.el7.x86_64                     24/31
+  Installing : krb5-devel-1.12.2-14.el7.x86_64                            25/31
+  Installing : 1:openssl-devel-1.0.1e-42.el7.8.x86_64                     26/31
+  Installing : libxslt-devel-1.1.28-5.el7.x86_64                          27/31
+  Installing : gcc-4.8.3-9.el7.x86_64                                     28/31
+  Installing : postgresql-devel-9.2.10-2.el7_1.x86_64                     29/31
+  Installing : libffi-devel-3.0.13-11.el7.x86_64                          30/31
+  Installing : 1:gmp-devel-6.0.0-11.el7.x86_64                            31/31
+  Verifying  : 1:openssl-devel-1.0.1e-42.el7.8.x86_64                      1/31
+  Verifying  : keyutils-libs-devel-1.5.8-3.el7.x86_64                      2/31
+  Verifying  : perl-Git-1.8.3.1-4.el7.noarch                               3/31
+  Verifying  : krb5-devel-1.12.2-14.el7.x86_64                             4/31
+  Verifying  : libxslt-devel-1.1.28-5.el7.x86_64                           5/31
+  Verifying  : pcre-devel-8.32-14.el7.x86_64                               6/31
+  Verifying  : postgresql-devel-9.2.10-2.el7_1.x86_64                      7/31
+  Verifying  : libxml2-devel-2.9.1-5.el7_1.2.x86_64                        8/31
+  Verifying  : libverto-devel-0.2.5-4.el7.x86_64                           9/31
+  Verifying  : perl-TermReadKey-2.30-20.el7.x86_64                        10/31
+  Verifying  : cpp-4.8.3-9.el7.x86_64                                     11/31
+  Verifying  : postgresql-libs-9.2.10-2.el7_1.x86_64                      12/31
+  Verifying  : git-1.8.3.1-4.el7.x86_64                                   13/31
+  Verifying  : libsepol-devel-2.1.9-3.el7.x86_64                          14/31
+  Verifying  : 1:gmp-devel-6.0.0-11.el7.x86_64                            15/31
+  Verifying  : glibc-devel-2.17-78.el7.x86_64                             16/31
+  Verifying  : postgresql-9.2.10-2.el7_1.x86_64                           17/31
+  Verifying  : libselinux-devel-2.2.2-6.el7.x86_64                        18/31
+  Verifying  : 1:perl-Error-0.17020-2.el7.noarch                          19/31
+  Verifying  : xz-devel-5.1.2-9alpha.el7.x86_64                           20/31
+  Verifying  : libmpc-1.0.1-3.el7.x86_64                                  21/31
+  Verifying  : zlib-devel-1.2.7-13.el7.x86_64                             22/31
+  Verifying  : kernel-headers-3.10.0-229.4.2.el7.x86_64                   23/31
+  Verifying  : libgnome-keyring-3.8.0-3.el7.x86_64                        24/31
+  Verifying  : glibc-headers-2.17-78.el7.x86_64                           25/31
+  Verifying  : gcc-4.8.3-9.el7.x86_64                                     26/31
+  Verifying  : mpfr-3.1.1-4.el7.x86_64                                    27/31
+  Verifying  : libgpg-error-devel-1.12-3.el7.x86_64                       28/31
+  Verifying  : libffi-devel-3.0.13-11.el7.x86_64                          29/31
+  Verifying  : libcom_err-devel-1.42.9-7.el7.x86_64                       30/31
+  Verifying  : libgcrypt-devel-1.5.3-12.el7_1.1.x86_64                    31/31
+
+Installed:
+  gcc.x86_64 0:4.8.3-9.el7
+  git.x86_64 0:1.8.3.1-4.el7
+  gmp-devel.x86_64 1:6.0.0-11.el7
+  libffi-devel.x86_64 0:3.0.13-11.el7
+  libxml2-devel.x86_64 0:2.9.1-5.el7_1.2
+  libxslt-devel.x86_64 0:1.1.28-5.el7
+  openssl-devel.x86_64 1:1.0.1e-42.el7.8
+  postgresql-devel.x86_64 0:9.2.10-2.el7_1
+
+Dependency Installed:
+  cpp.x86_64 0:4.8.3-9.el7
+  glibc-devel.x86_64 0:2.17-78.el7
+  glibc-headers.x86_64 0:2.17-78.el7
+  kernel-headers.x86_64 0:3.10.0-229.4.2.el7
+  keyutils-libs-devel.x86_64 0:1.5.8-3.el7
+  krb5-devel.x86_64 0:1.12.2-14.el7
+  libcom_err-devel.x86_64 0:1.42.9-7.el7
+  libgcrypt-devel.x86_64 0:1.5.3-12.el7_1.1
+  libgnome-keyring.x86_64 0:3.8.0-3.el7
+  libgpg-error-devel.x86_64 0:1.12-3.el7
+  libmpc.x86_64 0:1.0.1-3.el7
+  libselinux-devel.x86_64 0:2.2.2-6.el7
+  libsepol-devel.x86_64 0:2.1.9-3.el7
+  libverto-devel.x86_64 0:0.2.5-4.el7
+  mpfr.x86_64 0:3.1.1-4.el7
+  pcre-devel.x86_64 0:8.32-14.el7
+  perl-Error.noarch 1:0.17020-2.el7
+  perl-Git.noarch 0:1.8.3.1-4.el7
+  perl-TermReadKey.x86_64 0:2.30-20.el7
+  postgresql.x86_64 0:9.2.10-2.el7_1
+  postgresql-libs.x86_64 0:9.2.10-2.el7_1
+  xz-devel.x86_64 0:5.1.2-9alpha.el7
+  zlib-devel.x86_64 0:1.2.7-13.el7
+
+Complete!
+[ OK ]
+[orbit] Install Rally - download installation script..
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 22533  100 22533    0     0  27229      0 --:--:-- --:--:-- --:--:-- 27213
+[ OK ]
+[orbit] Install Rally - run installation script - this may take a while..
+which: no python3 in (/sbin:/bin:/usr/sbin:/usr/bin)
+Downloading Rally from subversion repository https://github.com/openstack/rally ...
+Cloning into '/home/admin/rally.git'...
+Requirement already satisfied (use --upgrade to upgrade): pbr in /usr/lib/python2.7/site-packages
+Downloading/unpacking tox<=1.6.1
+  Running setup.py (path:/tmp/pip-build-OevLRH/tox/setup.py) egg_info for package tox
+
+Downloading/unpacking virtualenv>=1.9.1 (from tox<=1.6.1)
+Downloading/unpacking py>=1.4.15 (from tox<=1.6.1)
+Installing collected packages: tox, virtualenv, py
+  Running setup.py install for tox
+
+    Installing tox script to /usr/bin
+    Installing tox-quickstart script to /usr/bin
+Successfully installed tox virtualenv py
+Cleaning up...
+Cannot uninstall requirement rally, not installed
+Storing debug log for failure in /root/.pip/pip.log
+Unpacking /home/admin/rally.git
+  Running setup.py (path:/tmp/pip-SgXfNt-build/setup.py) egg_info for package from file:///home/admin/rally.git
+    [pbr] Processing SOURCES.txt
+    warning: LocalManifestMaker: standard file '-c' not found
+
+    [pbr] In git context, generating filelist from git
+    warning: no files found matching 'AUTHORS'
+    warning: no files found matching 'ChangeLog'
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+Requirement already satisfied (use --upgrade to upgrade): Babel>=1.3 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): boto>=2.32.1 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): decorator>=3.4.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): fixtures>=0.3.14 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): iso8601>=0.1.9 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): Jinja2>=2.6 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): jsonschema>=2.0.0,<3.0.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): netaddr>=0.7.12 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking oslo.config>=1.11.0 (from rally==0.0.4.post171)
+Downloading/unpacking oslo.db>=1.10.0 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): oslo.i18n>=1.5.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking oslo.log>=1.2.0 (from rally==0.0.4.post171)
+  Downloading oslo.log-1.4.0-py2.py3-none-any.whl
+Requirement already satisfied (use --upgrade to upgrade): oslo.serialization>=1.4.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): oslo.utils>=1.4.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): paramiko>=1.13.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking pbr>=0.11,<2.0 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): PrettyTable>=0.7,<0.8 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): PyYAML>=3.1.0 in /usr/lib64/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking psycopg2 (from rally==0.0.4.post171)
+  Running setup.py (path:/tmp/pip-build-rmo_2j/psycopg2/setup.py) egg_info for package psycopg2
+
+Downloading/unpacking python-designateclient>=1.0.0 (from rally==0.0.4.post171)
+  Downloading python_designateclient-1.2.0-py2.py3-none-any.whl
+Downloading/unpacking python-glanceclient>=0.17.1 (from rally==0.0.4.post171)
+Downloading/unpacking python-keystoneclient>=1.6.0 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-novaclient>=2.22.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-neutronclient>=2.3.11,<3 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking python-cinderclient>=1.2.1 (from rally==0.0.4.post171)
+Downloading/unpacking python-manilaclient>=1.0.4 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-heatclient>=0.3.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-ceilometerclient>=1.0.13 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking python-ironicclient>=0.2.1 (from rally==0.0.4.post171)
+Downloading/unpacking python-saharaclient>=0.9.0 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-troveclient>=1.0.7 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking python-zaqarclient>=0.1.1 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-swiftclient>=2.2.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking python-subunit>=0.0.18 (from rally==0.0.4.post171)
+  Running setup.py (path:/tmp/pip-build-rmo_2j/python-subunit/setup.py) egg_info for package python-subunit
+
+    warning: no previously-included files found matching '.gitignore'
+    warning: no previously-included files found matching 'aclocal.m4'
+    no previously-included directories found matching 'autom4te.cache'
+    no previously-included directories found matching 'c'
+    no previously-included directories found matching 'c++'
+    no previously-included directories found matching 'compile'
+    warning: no previously-included files found matching 'configure*'
+    warning: no previously-included files found matching 'depcomp'
+    warning: no previously-included files found matching 'INSTALL'
+    warning: no previously-included files found matching 'install-sh'
+    warning: no previously-included files found matching 'lib*'
+    warning: no previously-included files found matching 'ltmain.sh'
+    no previously-included directories found matching 'm4'
+    warning: no previously-included files found matching 'Makefile*'
+    warning: no previously-included files found matching 'missing'
+    no previously-included directories found matching 'perl'
+    warning: no previously-included files found matching 'py-compile'
+    no previously-included directories found matching 'shell'
+    warning: no previously-included files found matching 'stamp-h1'
+Requirement already satisfied (use --upgrade to upgrade): requests>=2.5.2 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): SQLAlchemy>=0.9.7,<=0.9.99 in /usr/lib64/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3 (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): six>=1.9.0 in /usr/lib/python2.7/site-packages (from rally==0.0.4.post171)
+Downloading/unpacking ordereddict (from rally==0.0.4.post171)
+  Downloading ordereddict-1.1.tar.gz
+  Running setup.py (path:/tmp/pip-build-rmo_2j/ordereddict/setup.py) egg_info for package ordereddict
+
+Requirement already satisfied (use --upgrade to upgrade): simplejson>=2.2.0 in /usr/lib64/python2.7/site-packages (from rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): pytz>=0a in /usr/lib/python2.7/site-packages (from Babel>=1.3->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): markupsafe in /usr/lib64/python2.7/site-packages (from Jinja2>=2.6->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): stevedore>=1.3.0 in /usr/lib/python2.7/site-packages (from oslo.config>=1.11.0->rally==0.0.4.post171)
+Downloading/unpacking argparse (from oslo.config>=1.11.0->rally==0.0.4.post171)
+  Downloading argparse-1.3.0-py2.py3-none-any.whl
+Requirement already satisfied (use --upgrade to upgrade): alembic>=0.7.2 in /usr/lib/python2.7/site-packages (from oslo.db>=1.10.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): sqlalchemy-migrate>=0.9.6 in /usr/lib/python2.7/site-packages (from oslo.db>=1.10.0->rally==0.0.4.post171)
+Downloading/unpacking testscenarios>=0.4 (from oslo.db>=1.10.0->rally==0.0.4.post171)
+  Downloading testscenarios-0.5.0-py2.py3-none-any.whl
+Downloading/unpacking testresources>=0.2.4 (from oslo.db>=1.10.0->rally==0.0.4.post171)
+  Downloading testresources-0.2.7.tar.gz
+  Running setup.py (path:/tmp/pip-build-rmo_2j/testresources/setup.py) egg_info for package testresources
+
+Requirement already satisfied (use --upgrade to upgrade): oslo.context>=0.2.0 in /usr/lib/python2.7/site-packages (from oslo.log>=1.2.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): debtcollector>=0.3.0 in /usr/lib/python2.7/site-packages (from oslo.log>=1.2.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): pycrypto>=2.1,!=2.4 in /usr/lib64/python2.7/site-packages (from paramiko>=1.13.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): ecdsa>=0.11 in /usr/lib/python2.7/site-packages (from paramiko>=1.13.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): cliff>=1.10.0 in /usr/lib/python2.7/site-packages (from python-designateclient>=1.0.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): warlock>=1.0.1,<2 in /usr/lib/python2.7/site-packages (from python-glanceclient>=0.17.1->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): pyOpenSSL>=0.11 in /usr/lib64/python2.7/site-packages (from python-glanceclient>=0.17.1->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-openstackclient>=1.0.0 in /usr/lib/python2.7/site-packages (from python-manilaclient>=1.0.4->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): httplib2>=0.7.5 in /usr/lib/python2.7/site-packages (from python-ironicclient>=0.2.1->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): lxml>=2.3 in /usr/lib64/python2.7/site-packages (from python-ironicclient>=0.2.1->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): anyjson>=0.3.3 in /usr/lib/python2.7/site-packages (from python-ironicclient>=0.2.1->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): extras in /usr/lib/python2.7/site-packages (from python-subunit>=0.0.18->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): testtools>=0.9.34 in /usr/lib/python2.7/site-packages (from python-subunit>=0.0.18->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): Pygments>=1.2 in /usr/lib/python2.7/site-packages (from sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): docutils>=0.7 in /usr/lib/python2.7/site-packages (from sphinx>=1.1.2,!=1.2.0,!=1.3b1,<1.3->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): Mako in /usr/lib/python2.7/site-packages (from alembic>=0.7.2->oslo.db>=1.10.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): sqlparse in /usr/lib/python2.7/site-packages (from sqlalchemy-migrate>=0.9.6->oslo.db>=1.10.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): Tempita>=0.4 in /usr/lib/python2.7/site-packages (from sqlalchemy-migrate>=0.9.6->oslo.db>=1.10.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): cmd2>=0.6.7 in /usr/lib/python2.7/site-packages (from cliff>=1.10.0->python-designateclient>=1.0.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): pyparsing>=2.0.1 in /usr/lib/python2.7/site-packages (from cliff>=1.10.0->python-designateclient>=1.0.0->rally==0.0.4.post171)
+Requirement already satisfied (use --upgrade to upgrade): python-mimeparse in /usr/lib/python2.7/site-packages (from testtools>=0.9.34->python-subunit>=0.0.18->rally==0.0.4.post171)
+Installing collected packages: oslo.config, oslo.db, oslo.log, pbr, psycopg2, python-designateclient, python-glanceclient, python-keystoneclient, python-cinderclient, python-manilaclient, python-ironicclient, python-saharaclient, python-zaqarclient, python-subunit, sphinx, ordereddict, rally, argparse, testscenarios, testresources
+  Found existing installation: oslo.config 1.9.3
+    Uninstalling oslo.config:
+      Successfully uninstalled oslo.config
+  Found existing installation: oslo.db 1.7.1
+    Uninstalling oslo.db:
+      Successfully uninstalled oslo.db
+  Found existing installation: oslo.log 1.0.0
+    Uninstalling oslo.log:
+      Successfully uninstalled oslo.log
+  Found existing installation: pbr 0.10.8
+    Uninstalling pbr:
+      Successfully uninstalled pbr
+  Running setup.py install for psycopg2
+    building 'psycopg2._psycopg' extension
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/psycopgmodule.c -o build/temp.linux-x86_64-2.7/psycopg/psycopgmodule.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/green.c -o build/temp.linux-x86_64-2.7/psycopg/green.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/pqpath.c -o build/temp.linux-x86_64-2.7/psycopg/pqpath.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/utils.c -o build/temp.linux-x86_64-2.7/psycopg/utils.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/bytes_format.c -o build/temp.linux-x86_64-2.7/psycopg/bytes_format.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/connection_int.c -o build/temp.linux-x86_64-2.7/psycopg/connection_int.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/connection_type.c -o build/temp.linux-x86_64-2.7/psycopg/connection_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/cursor_int.c -o build/temp.linux-x86_64-2.7/psycopg/cursor_int.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/cursor_type.c -o build/temp.linux-x86_64-2.7/psycopg/cursor_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/diagnostics_type.c -o build/temp.linux-x86_64-2.7/psycopg/diagnostics_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/error_type.c -o build/temp.linux-x86_64-2.7/psycopg/error_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/lobject_int.c -o build/temp.linux-x86_64-2.7/psycopg/lobject_int.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/lobject_type.c -o build/temp.linux-x86_64-2.7/psycopg/lobject_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/notify_type.c -o build/temp.linux-x86_64-2.7/psycopg/notify_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/xid_type.c -o build/temp.linux-x86_64-2.7/psycopg/xid_type.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_asis.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_asis.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_binary.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_binary.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_datetime.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_datetime.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_list.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_list.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_pboolean.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_pboolean.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_pdecimal.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_pdecimal.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_pint.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_pint.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_pfloat.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_pfloat.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/adapter_qstring.c -o build/temp.linux-x86_64-2.7/psycopg/adapter_qstring.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/microprotocols.c -o build/temp.linux-x86_64-2.7/psycopg/microprotocols.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/microprotocols_proto.c -o build/temp.linux-x86_64-2.7/psycopg/microprotocols_proto.o -Wdeclaration-after-statement
+    gcc -pthread -fno-strict-aliasing -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -DNDEBUG -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -m64 -mtune=generic -D_GNU_SOURCE -fPIC -fwrapv -fPIC -DPSYCOPG_DEFAULT_PYDATETIME=1 -DPSYCOPG_VERSION="2.6.1 (dt dec pq3 ext)" -DPG_VERSION_HEX=0x09020A -I/usr/include/python2.7 -I. -I/usr/include -I/usr/include/pgsql/server -c psycopg/typecast.c -o build/temp.linux-x86_64-2.7/psycopg/typecast.o -Wdeclaration-after-statement
+    gcc -pthread -shared -Wl,-z,relro build/temp.linux-x86_64-2.7/psycopg/psycopgmodule.o build/temp.linux-x86_64-2.7/psycopg/green.o build/temp.linux-x86_64-2.7/psycopg/pqpath.o build/temp.linux-x86_64-2.7/psycopg/utils.o build/temp.linux-x86_64-2.7/psycopg/bytes_format.o build/temp.linux-x86_64-2.7/psycopg/connection_int.o build/temp.linux-x86_64-2.7/psycopg/connection_type.o build/temp.linux-x86_64-2.7/psycopg/cursor_int.o build/temp.linux-x86_64-2.7/psycopg/cursor_type.o build/temp.linux-x86_64-2.7/psycopg/diagnostics_type.o build/temp.linux-x86_64-2.7/psycopg/error_type.o build/temp.linux-x86_64-2.7/psycopg/lobject_int.o build/temp.linux-x86_64-2.7/psycopg/lobject_type.o build/temp.linux-x86_64-2.7/psycopg/notify_type.o build/temp.linux-x86_64-2.7/psycopg/xid_type.o build/temp.linux-x86_64-2.7/psycopg/adapter_asis.o build/temp.linux-x86_64-2.7/psycopg/adapter_binary.o build/temp.linux-x86_64-2.7/psycopg/adapter_datetime.o build/temp.linux-x86_64-2.7/psycopg/adapter_list.o build/temp.linux-x86_64-2.7/psycopg/adapter_pboolean.o build/temp.linux-x86_64-2.7/psycopg/adapter_pdecimal.o build/temp.linux-x86_64-2.7/psycopg/adapter_pint.o build/temp.linux-x86_64-2.7/psycopg/adapter_pfloat.o build/temp.linux-x86_64-2.7/psycopg/adapter_qstring.o build/temp.linux-x86_64-2.7/psycopg/microprotocols.o build/temp.linux-x86_64-2.7/psycopg/microprotocols_proto.o build/temp.linux-x86_64-2.7/psycopg/typecast.o -L/usr/lib64 -L/usr/lib64 -lpython2.7 -lpq -o build/lib.linux-x86_64-2.7/psycopg2/_psycopg.so
+
+  Found existing installation: python-glanceclient 0.17.0
+    Uninstalling python-glanceclient:
+      Successfully uninstalled python-glanceclient
+  Found existing installation: python-keystoneclient 1.3.0
+    Uninstalling python-keystoneclient:
+      Successfully uninstalled python-keystoneclient
+  Found existing installation: python-cinderclient 1.1.1
+    Uninstalling python-cinderclient:
+      Successfully uninstalled python-cinderclient
+  Found existing installation: python-saharaclient 0.8.0
+    Uninstalling python-saharaclient:
+      Successfully uninstalled python-saharaclient
+  Running setup.py install for python-subunit
+    changing mode of build/scripts-2.7/subunit-1to2 from 644 to 755
+    changing mode of build/scripts-2.7/subunit-2to1 from 644 to 755
+    changing mode of build/scripts-2.7/subunit-filter from 644 to 755
+    changing mode of build/scripts-2.7/subunit-ls from 644 to 755
+    changing mode of build/scripts-2.7/subunit-notify from 644 to 755
+    changing mode of build/scripts-2.7/subunit-output from 644 to 755
+    changing mode of build/scripts-2.7/subunit-stats from 644 to 755
+    changing mode of build/scripts-2.7/subunit-tags from 644 to 755
+    changing mode of build/scripts-2.7/subunit2csv from 644 to 755
+    changing mode of build/scripts-2.7/subunit2gtk from 644 to 755
+    changing mode of build/scripts-2.7/subunit2junitxml from 644 to 755
+    changing mode of build/scripts-2.7/subunit2pyunit from 644 to 755
+    changing mode of build/scripts-2.7/tap2subunit from 644 to 755
+
+    warning: no previously-included files found matching '.gitignore'
+    warning: no previously-included files found matching 'aclocal.m4'
+    no previously-included directories found matching 'autom4te.cache'
+    no previously-included directories found matching 'c'
+    no previously-included directories found matching 'c++'
+    no previously-included directories found matching 'compile'
+    warning: no previously-included files found matching 'configure*'
+    warning: no previously-included files found matching 'depcomp'
+    warning: no previously-included files found matching 'INSTALL'
+    warning: no previously-included files found matching 'install-sh'
+    warning: no previously-included files found matching 'lib*'
+    warning: no previously-included files found matching 'ltmain.sh'
+    no previously-included directories found matching 'm4'
+    warning: no previously-included files found matching 'Makefile*'
+    warning: no previously-included files found matching 'missing'
+    no previously-included directories found matching 'perl'
+    warning: no previously-included files found matching 'py-compile'
+    no previously-included directories found matching 'shell'
+    warning: no previously-included files found matching 'stamp-h1'
+    changing mode of /usr/bin/subunit-1to2 to 755
+    changing mode of /usr/bin/subunit-2to1 to 755
+    changing mode of /usr/bin/subunit-filter to 755
+    changing mode of /usr/bin/subunit-ls to 755
+    changing mode of /usr/bin/subunit-notify to 755
+    changing mode of /usr/bin/subunit-output to 755
+    changing mode of /usr/bin/subunit-stats to 755
+    changing mode of /usr/bin/subunit-tags to 755
+    changing mode of /usr/bin/subunit2csv to 755
+    changing mode of /usr/bin/subunit2gtk to 755
+    changing mode of /usr/bin/subunit2junitxml to 755
+    changing mode of /usr/bin/subunit2pyunit to 755
+    changing mode of /usr/bin/tap2subunit to 755
+  Running setup.py install for ordereddict
+
+  Running setup.py install for rally
+    [pbr] Processing SOURCES.txt
+    warning: LocalManifestMaker: standard file '-c' not found
+
+    [pbr] In git context, generating filelist from git
+    warning: no files found matching 'AUTHORS'
+    warning: no files found matching 'ChangeLog'
+    warning: no previously-included files matching '*.pyc' found anywhere in distribution
+    Installing rally-manage script to /usr/bin
+    Installing rally script to /usr/bin
+  Running setup.py install for testresources
+
+Successfully installed oslo.config oslo.db oslo.log pbr psycopg2 python-designateclient python-glanceclient python-keystoneclient python-cinderclient python-manilaclient python-ironicclient python-saharaclient python-zaqarclient python-subunit sphinx ordereddict rally argparse testscenarios testresources
+Cleaning up...
+==============================
+Installation of Rally is done!
+==============================
+
+Rally is now installed in your system. Information about your Rally
+installation:
+
+  * Method: system
+  * Database at: /var/lib/rally/database
+  * Configuration file at: /etc/rally
+
+[ OK ]
+[orbit] Populate Rally's database..
+[ OK ]
+[orbit] Register the Openstack deployment in Rally..
++--------------------------------------+----------------------------+-------+------------------+--------+
+| uuid                                 | created_at                 | name  | status           | active |
++--------------------------------------+----------------------------+-------+------------------+--------+
+| eec674cb-6d3e-43b6-8b5d-1fb5a7bc96d3 | 2015-06-17 23:57:32.613852 | vorbe | deploy->finished |        |
++--------------------------------------+----------------------------+-------+------------------+--------+
+Using deployment: eec674cb-6d3e-43b6-8b5d-1fb5a7bc96d3
+~/.rally/openrc was updated
+
+HINTS:
+* To get your cloud resources, run:
+        rally show [flavors|images|keypairs|networks|secgroups]
+
+* To use standard OpenStack clients, set up your env by running:
+        source ~/.rally/openrc
+  OpenStack clients are now configured, e.g run:
+        glance image-list
+[ OK ]
+[orbit] Register the Openstack deployment in Rally..
+Using deployment: eec674cb-6d3e-43b6-8b5d-1fb5a7bc96d3
+~/.rally/openrc was updated
+
+HINTS:
+* To get your cloud resources, run:
+        rally show [flavors|images|keypairs|networks|secgroups]
+
+* To use standard OpenStack clients, set up your env by running:
+        source ~/.rally/openrc
+  OpenStack clients are now configured, e.g run:
+        glance image-list
+[ OK ]
+[orbit] Check that the current openstack deployment is healthy and ready to be benchmarked..
+keystone endpoints are valid and following services are available:
++------------+--------------+-----------+
+| services   | type         | status    |
++------------+--------------+-----------+
+| ceilometer | metering     | Available |
+| cinder     | volume       | Available |
+| cinderv2   | volumev2     | Available |
+| glance     | image        | Available |
+| keystone   | identity     | Available |
+| neutron    | network      | Available |
+| nova       | compute      | Available |
+| nova_ec2   | ec2          | Available |
+| novav3     | computev3    | Available |
+| swift      | object-store | Available |
+| swift_s3   | s3           | Available |
++------------+--------------+-----------+
+[ OK ]
+[orbit] Take snapshots of VMs after successful rally install..
+Domain snapshot ok_rally_install created
+Domain snapshot ok_rally_install created
+Domain snapshot ok_rally_install created
+[ OK ]
+[orbit] Source the rc admin file - sets the required environment variables..
+[ OK ]
+[orbit] Create Cirros image from link..
++------------------+--------------------------------------+
+| Property         | Value                                |
++------------------+--------------------------------------+
+| checksum         | None                                 |
+| container_format | bare                                 |
+| created_at       | 2015-06-17T23:57:59.000000           |
+| deleted          | False                                |
+| deleted_at       | None                                 |
+| disk_format      | qcow2                                |
+| id               | f453c8a6-1920-4fc5-a90d-e138818d20f5 |
+| is_public        | True                                 |
+| min_disk         | 0                                    |
+| min_ram          | 0                                    |
+| name             | cirros33                             |
+| owner            | ca3f7eb9b9654f1eb336b5ec6c49096e     |
+| protected        | False                                |
+| size             | 13200896                             |
+| status           | queued                               |
+| updated_at       | 2015-06-17T23:57:59.000000           |
+| virtual_size     | None                                 |
++------------------+--------------------------------------+
+[ OK ]
+[orbit] Add nano image flavor to nova for test purposes..
++--------------------------------------+---------+-----------+------+-----------+------+-------+-------------+-----------+
+| ID                                   | Name    | Memory_MB | Disk | Ephemeral | Swap | VCPUs | RXTX_Factor | Is_Public |
++--------------------------------------+---------+-----------+------+-----------+------+-------+-------------+-----------+
+| 091c5710-686a-404b-825f-55dfa4d6a3e1 | m1.nano | 128       | 1    | 0         |      | 1     | 1.0         | True      |
++--------------------------------------+---------+-----------+------+-----------+------+-------+-------------+-----------+
+[ OK ]
+[orbit] Create keypair and add it to nova..
+Generating public/private rsa key pair.
+Your identification has been saved in id_rsa_demo.
+Your public key has been saved in id_rsa_demo.pub.
+The key fingerprint is:
+5e:e4:8d:c1:15:ac:ac:48:8d:fe:19:cd:4e:c4:71:8d admin@orbit-controller
+The key's randomart image is:
++--[ RSA 2048]----+
+|           .o+   |
+|         ...E .  |
+|       o o++     |
+|      o .o=+     |
+|     o .S=+ .    |
+|      o.o.+      |
+|       ..=       |
+|        o .      |
+|                 |
++-----------------+
+[ OK ]
+[orbit] Create security-group default rules for icmp and ssh tcp traffic..
+Created a new security_group_rule:
++-------------------+--------------------------------------+
+| Field             | Value                                |
++-------------------+--------------------------------------+
+| direction         | ingress                              |
+| ethertype         | IPv4                                 |
+| id                | df0ad647-1c9d-4d7b-b593-80c5ba708af3 |
+| port_range_max    |                                      |
+| port_range_min    |                                      |
+| protocol          | icmp                                 |
+| remote_group_id   |                                      |
+| remote_ip_prefix  |                                      |
+| security_group_id | 1dc2c1c9-439a-4d0f-9940-0e4b4eb30b58 |
+| tenant_id         | ca3f7eb9b9654f1eb336b5ec6c49096e     |
++-------------------+--------------------------------------+
+Created a new security_group_rule:
++-------------------+--------------------------------------+
+| Field             | Value                                |
++-------------------+--------------------------------------+
+| direction         | ingress                              |
+| ethertype         | IPv4                                 |
+| id                | e27e48f3-783f-45a5-84ab-7c812db3e6bb |
+| port_range_max    | 22                                   |
+| port_range_min    | 22                                   |
+| protocol          | tcp                                  |
+| remote_group_id   |                                      |
+| remote_ip_prefix  |                                      |
+| security_group_id | 1dc2c1c9-439a-4d0f-9940-0e4b4eb30b58 |
+| tenant_id         | ca3f7eb9b9654f1eb336b5ec6c49096e     |
++-------------------+--------------------------------------+
+[ OK ]
+[orbit] Create the external network..
+Created a new network:
++---------------------------+--------------------------------------+
+| Field                     | Value                                |
++---------------------------+--------------------------------------+
+| admin_state_up            | True                                 |
+| id                        | 40568faf-2238-4e7c-bca1-8eaaa6c9c528 |
+| mtu                       | 0                                    |
+| name                      | external_network                     |
+| provider:network_type     | gre                                  |
+| provider:physical_network |                                      |
+| provider:segmentation_id  | 1001                                 |
+| router:external           | True                                 |
+| shared                    | False                                |
+| status                    | ACTIVE                               |
+| subnets                   |                                      |
+| tenant_id                 | ca3f7eb9b9654f1eb336b5ec6c49096e     |
++---------------------------+--------------------------------------+
+[ OK ]
+[orbit] Create external_subnet..
+Created a new subnet:
++-------------------+--------------------------------------------------+
+| Field             | Value                                            |
++-------------------+--------------------------------------------------+
+| allocation_pools  | {"start": "172.16.16.2", "end": "172.16.16.254"} |
+| cidr              | 172.16.16.0/24                                   |
+| dns_nameservers   |                                                  |
+| enable_dhcp       | False                                            |
+| gateway_ip        | 172.16.16.1                                      |
+| host_routes       |                                                  |
+| id                | 80f18bb2-7c8e-4bae-a30d-06be2b334b99             |
+| ip_version        | 4                                                |
+| ipv6_address_mode |                                                  |
+| ipv6_ra_mode      |                                                  |
+| name              | external_subnet                                  |
+| network_id        | 40568faf-2238-4e7c-bca1-8eaaa6c9c528             |
+| subnetpool_id     |                                                  |
+| tenant_id         | ca3f7eb9b9654f1eb336b5ec6c49096e                 |
++-------------------+--------------------------------------------------+
+[ OK ]
+[orbit] Create router to external_network..
+Created a new router:
++-----------------------+--------------------------------------+
+| Field                 | Value                                |
++-----------------------+--------------------------------------+
+| admin_state_up        | True                                 |
+| distributed           | False                                |
+| external_gateway_info |                                      |
+| ha                    | False                                |
+| id                    | 259a6b20-4ca4-4355-a4f9-8aa973b142fc |
+| name                  | router_ext                           |
+| routes                |                                      |
+| status                | ACTIVE                               |
+| tenant_id             | ca3f7eb9b9654f1eb336b5ec6c49096e     |
++-----------------------+--------------------------------------+
+Set gateway for router router_ext
+[ OK ]
+[orbit] Create private network..
+Created a new network:
++---------------------------+--------------------------------------+
+| Field                     | Value                                |
++---------------------------+--------------------------------------+
+| admin_state_up            | True                                 |
+| id                        | 8f1fe645-7ebf-4573-a5d2-038523150363 |
+| mtu                       | 0                                    |
+| name                      | private_network                      |
+| provider:network_type     | gre                                  |
+| provider:physical_network |                                      |
+| provider:segmentation_id  | 1002                                 |
+| router:external           | False                                |
+| shared                    | False                                |
+| status                    | ACTIVE                               |
+| subnets                   |                                      |
+| tenant_id                 | ca3f7eb9b9654f1eb336b5ec6c49096e     |
++---------------------------+--------------------------------------+
+[ OK ]
+[orbit] Create private sub-network..
+Created a new subnet:
++-------------------+--------------------------------------------------+
+| Field             | Value                                            |
++-------------------+--------------------------------------------------+
+| allocation_pools  | {"start": "192.168.1.2", "end": "192.168.1.254"} |
+| cidr              | 192.168.1.0/24                                   |
+| dns_nameservers   |                                                  |
+| enable_dhcp       | True                                             |
+| gateway_ip        | 192.168.1.1                                      |
+| host_routes       |                                                  |
+| id                | 69459fb6-2e7b-4c45-8d5c-9b9ebb14de89             |
+| ip_version        | 4                                                |
+| ipv6_address_mode |                                                  |
+| ipv6_ra_mode      |                                                  |
+| name              | private_subnet                                   |
+| network_id        | 8f1fe645-7ebf-4573-a5d2-038523150363             |
+| subnetpool_id     |                                                  |
+| tenant_id         | ca3f7eb9b9654f1eb336b5ec6c49096e                 |
++-------------------+--------------------------------------------------+
+[ OK ]
+[orbit] Create private sub-network..
+Added interface 5447da61-d40b-4d4b-89ea-ea7607774c94 to router router_ext.
+[ OK ]
+[orbit] Boot the demo server with the previously defined configurations..
++--------------------------------------+-------------------------------------------------+
+| Property                             | Value                                           |
++--------------------------------------+-------------------------------------------------+
+| OS-DCF:diskConfig                    | MANUAL                                          |
+| OS-EXT-AZ:availability_zone          | nova                                            |
+| OS-EXT-SRV-ATTR:host                 | -                                               |
+| OS-EXT-SRV-ATTR:hypervisor_hostname  | -                                               |
+| OS-EXT-SRV-ATTR:instance_name        | instance-00000001                               |
+| OS-EXT-STS:power_state               | 0                                               |
+| OS-EXT-STS:task_state                | scheduling                                      |
+| OS-EXT-STS:vm_state                  | building                                        |
+| OS-SRV-USG:launched_at               | -                                               |
+| OS-SRV-USG:terminated_at             | -                                               |
+| accessIPv4                           |                                                 |
+| accessIPv6                           |                                                 |
+| adminPass                            | 46z6gggGKooG                                    |
+| config_drive                         |                                                 |
+| created                              | 2015-06-17T23:58:31Z                            |
+| flavor                               | m1.nano (091c5710-686a-404b-825f-55dfa4d6a3e1)  |
+| hostId                               |                                                 |
+| id                                   | 6a1d7123-65da-4874-ad6b-2b0659400466            |
+| image                                | cirros33 (f453c8a6-1920-4fc5-a90d-e138818d20f5) |
+| key_name                             | demo                                            |
+| metadata                             | {}                                              |
+| name                                 | test_server                                     |
+| os-extended-volumes:volumes_attached | []                                              |
+| progress                             | 0                                               |
+| security_groups                      | default                                         |
+| status                               | BUILD                                           |
+| tenant_id                            | ca3f7eb9b9654f1eb336b5ec6c49096e                |
+| updated                              | 2015-06-17T23:58:31Z                            |
+| user_id                              | ec6aecb48d38480389e81e3346cf1a11                |
++--------------------------------------+-------------------------------------------------+
+
+Server building... 100% complete
+Finished
+[ OK ]
+[orbit] Create a floating ip for inbound access to test_server..
++--------------------------------------+-------------+-----------+----------+------------------+
+| Id                                   | IP          | Server Id | Fixed IP | Pool             |
++--------------------------------------+-------------+-----------+----------+------------------+
+| 148a93b3-d955-4488-8f3b-6a9d6ab9a053 | 172.16.16.3 | -         | -        | external_network |
++--------------------------------------+-------------+-----------+----------+------------------+
+[ OK ]
+[orbit] Associate the floating ip with the test server instance..
+[ OK ]
+[orbit] Now we need to test if the test_server is reachable by its floating ip..
+[ ? ]
+[orbit] Installation successful!
+[orbit] Elapsed Time: 35m 31s
+

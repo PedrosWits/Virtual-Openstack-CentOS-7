@@ -553,7 +553,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "echo 'UUID=\"$(uuidgen)\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
-"echo 'DNS1=$ext_network_ip' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
+"echo 'GATEWAY=$ext_network_ip' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_eth0 \
 "sudo ifup eth2" 
