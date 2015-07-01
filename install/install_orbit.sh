@@ -6,11 +6,11 @@
 #======================================================================
 # Usage
 usage="Usage: install_orbit.sh [options]
-   --clean          Clean previous installation (remove all traces) with parameters specified in vorbe.cfg
-   --save-base-vm   Save base vm - used for cloning any virtual node
-   --skip-base-vm   Use a saved base vm - with name specified in vorbe.cfg
-   --debug          Do not clean anything in case installation fails
-   --help           Prompt usage and help information"
+   --clean [cfg-file] Clean (remove all traces) with parameters specified in cfg-file
+   --save-base-vm     Save base vm - used for cloning any virtual node
+   --skip-base-vm     Use a saved base vm - with name specified in vorbe.cfg
+   --debug            Do not clean anything in case installation fails
+   --help             Prompt usage and help information"
 
 # Default values
 CLEAN=0
@@ -215,6 +215,7 @@ ok
 log "Generate MACs.. "
 mac_base=$(source $utility_macgen)
 mac_controller_management=$(source $utility_macgen)
+mac_controller_external=$(source $utility_macgen)
 mac_network_management=$(source $utility_macgen)
 mac_network_data=$(source $utility_macgen)
 mac_network_external=$(source $utility_macgen)
@@ -260,7 +261,7 @@ ok
 
 log "Read empty xml templates into temporary files.. "
 cat $xml_isolated_network | tee --append $data_network_file
-cat $xml_nat_network | tee --append $management_network_file
+cat $xml_isolated_network | tee --append $management_network_file
 cat $xml_nat_network | tee --append $external_network_file
 ok
 
@@ -296,7 +297,6 @@ sed -i "/range start/a <host mac='$mac_network_data' name='$vm_network_name' ip=
 ## Edit the ip for the compute1 node
 sed -i "/range start/a <host mac='$mac_compute1_data' name='$vm_compute1_name' ip='$vm_compute1_ip_eth1'/>" $data_network_file
 
-
 #External Network
 ## Edit the name
 sed -i "s|<name>.*|<name>$ext_network_name</name>|" $external_network_file
@@ -308,6 +308,8 @@ sed -i "s|<ip address.*|<ip address='$ext_network_ip' netmask='$ext_network_netm
 sed -i "s|<range.*|<range start='$ext_network_ip_start' end='$ext_network_ip_end'/>|" $external_network_file
 ## Edit the ip for network node
 sed -i "/range start/a <host mac='$mac_network_external' name='$vm_network_name' ip='$vm_network_ip_eth2'/>" $external_network_file
+# Edit the ip for the controller node
+sed -i "/range start/a <host mac='$mac_controller_external' name='$vm_controller_name' ip='$vm_controller_ip_eth2'/>" $external_network_file
 ok
 
 ## Create and start the network
@@ -349,7 +351,7 @@ if [ $SKIP_VM_CREATION -eq 0 ]; then
 	ok
 	# Create vm
 	log "Creating base vm - this may take a while... "
-	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $tmp_kickstart_file $management_network_name $kvm_uri $img_disk_path  
+	source $virt_create_vm $vm_base_name $vm_base_size $mac_base $vm_base_ram $vm_base_vcpus $tmp_kickstart_file $ext_network_name $kvm_uri $img_disk_path  
 	ok
 
 	# Snapshot
@@ -408,6 +410,8 @@ ok
 
 # Add NICS of data network to network and compute1
 log "Adding network-interfaces for $data_network_name network in network and compute1 nodes.."
+## Add NIC 2 to controller node - external/API network
+source $virt_add_nic $vm_controller_name $ext_network_name $mac_controller_external $kvm_uri
 ## Add NIC 2 to network node
 source $virt_add_nic $vm_network_name $data_network_name $mac_network_data $kvm_uri 
 ## Add NIC 3 to network node
@@ -423,6 +427,8 @@ virsh -c $kvm_uri start $vm_network_name
 virsh -c $kvm_uri start $vm_compute1_name 
 ok
 
+
+exit 0
 # Wait for Domains to start - 10 seconds
 log "Waiting 30 seconds for vms to start safely.."
 sleep 30

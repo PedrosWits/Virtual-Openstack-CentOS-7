@@ -95,6 +95,11 @@ vim
 aide
 net-tools
 ntp
+bind-utils
+traceroute
+git
+subversion
+iptables-services
 %end
 ################################################################################
 
@@ -122,6 +127,14 @@ systemctl stop NetworkManager
 systemctl disable NetworkManager
 systemctl enable network
 systemctl start network
+# Disable firewalld and use iptables instead
+systemctl stop firewalld
+systemctl mask firewalld
+systemctl enable iptables
+systemctl start iptables
+# iptables rule localhost verbose
+iptables -R INPUT 3 -i lo -s 127.0.0.1 -j ACCEPT
+service iptables save
 # Update packages
 yum update -y
 %end

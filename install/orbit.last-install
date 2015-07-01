@@ -21,6 +21,7 @@ vm_base_vcpus=1
 # Args Controller
 vm_controller_name="orbit-controller"
 vm_controller_ip_eth0="10.0.0.11" # Management network
+vm_controller_ip_eth2="172.16.16.11" # External/API network
 
 # Args Compute1
 vm_compute1_name="orbit-compute1"
@@ -60,4 +61,4 @@ ssh_key_name="orbit-key"
 
 # NTP servers
 ntp_servers_list="ntp01.fccn.pt,ntp02.fccn.pt"
-checkpoint=3
+checkpoint=2
