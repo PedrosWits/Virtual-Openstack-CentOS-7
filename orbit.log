@@ -1,7 +1,8 @@
 
-[0;36m[orbit][0m Load variables from user-editable file - /home/psilva/openstack-orbit/install/orbit.conf.. [0;32m[ OK ][0m
-orbit: A Virtual Openstack RedHat-based Environment starting on Ter Jun 30 12:30:21 WEST 2015
-[0;36m[orbit][0m Load file names and structure.. [0;32m[ OK ][0m
+[0;36m[orbit][0m Load variables from user-editable file - /home/psilva/openstack-orbit/orbit.conf.. [0;32m[ OK ][0m
+[0;36m[orbit][0m Save input configuration file in: /home/psilva/openstack-orbit/orbit.pedros..[0;32m[ OK ][0m
+orbit: A Virtual Openstack RedHat-based Environment starting on Qua Jul  8 19:15:31 WEST 2015
+[0;36m[orbit][0m Load functions and templates.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Check if virtualization is enabled.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Generate MACs.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Check if required software is installed.. [0;32m[ OK ][0m
@@ -20,7 +21,6 @@ orbit: A Virtual Openstack RedHat-based Environment starting on Ter Jun 30 12:30
 [0;36m[orbit][0m Waiting 30 seconds for vms to start and perform first-boot script safely..[0;32m[ OK ][0m
 [0;36m[orbit][0m Shutting down VMs for offline network configuration.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Waiting 30 seconds for vms to shutdown safely..[0;32m[ OK ][0m
-[0;36m[orbit][0m Adding network-interfaces for orbit-tunnels network in network and compute1 nodes..[0;32m[ OK ][0m
-[0;36m[orbit][0m Re-starting the VMs.. [0;32m[ OK ][0m
-[0;36m[orbit][0m [0;32mInstallation successful![0m
+[0;36m[orbit][0m Adding network-interfaces for orbit-tunnels network in network and compute1 nodes..[0;31m[ FAILED ][0m
+[0;36m[orbit][0m [0;31mInstallation unsuccessful![0m Cleaning up..
 [0;36m[orbit][0m Elapsed Time: 1m 18s

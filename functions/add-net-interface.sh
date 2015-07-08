@@ -1,12 +1,10 @@
 #!/bin/bash
-# Virt install time2goHam
 
-script_name="add-net-interface.sh"
-usage="$script_name domain network mac kvm_uri"
+function add_interface {
 
 if [ $# -ne 4 ]
   then
-    echo $usage
+    echo "Wrong usage. Input is: domain network mac kvm_uri"
     exit 1
 fi
 
@@ -22,3 +20,4 @@ virsh -c $kvm_uri attach-interface \
   --source $network \
   --mac $mac \
   --config 
+}
