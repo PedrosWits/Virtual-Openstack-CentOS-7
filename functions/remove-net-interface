@@ -16,5 +16,6 @@ kvm_uri=$3
 virsh -c $kvm_uri detach-interface \
  --domain $domain \
  --type network \
- --mac $mac
+ --mac $mac \
+ --current
 }

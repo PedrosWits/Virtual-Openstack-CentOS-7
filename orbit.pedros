@@ -19,15 +19,11 @@ vm_root_pass="naoseiroot"
 management_network_name="orbit-management"
 management_network_ip="10.0.0.1"
 management_bridge_name="virbr-man"
-management_network_ip_start="10.0.0.2"
-management_network_ip_end="10.0.0.254"
 management_network_netmask="255.255.255.0"
 
 data_network_name="orbit-tunnels"
 data_network_ip="10.0.1.1"
 data_bridge_name="virbr-tun"
-data_network_ip_start="10.0.1.2"
-data_network_ip_end="10.0.1.254"
 data_network_netmask="255.255.255.0"
 
 ext_network_name="orbit-external"
@@ -52,6 +48,7 @@ vm_controller_ip_ext="172.16.16.11" # External/API network
 vm_compute1_name="orbit-compute1"
 vm_compute1_ip_man="10.0.0.31" # Management network
 vm_compute1_ip_tun="10.0.1.31" # Data network
+vm_compute1_ip_ext="172.16.16.31" # Dummy
 
 #Args Network
 vm_network_name="orbit-network"
@@ -64,4 +61,4 @@ ssh_key_name="orbit-key"
 
 # NTP servers
 ntp_servers_list="ntp01.fccn.pt,ntp02.fccn.pt"
-checkpoint=2
+checkpoint=4
