@@ -659,6 +659,34 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
 "sudo service iptables save"
 
+# Enable Ipv4 forwarding - IMPORTANT!!
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"echo 'net.ipv4.ip_forward=1' | sudo tee --append /etc/sysctl.conf"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo sysctl -p /etc/sysctl.conf" 
+
+ok
+
+log "Set hostname resolution for openstack nodes.. "
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_ext \
+"echo -e \"$vm_controller_name $vm_controller_ip_man\n $vm_network_name $vm_network_ip_man\n $vm_compute1_name $vm_compute1_ip_man\" | sudo tee /etc/hosts"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"echo -e \"$vm_controller_name $vm_controller_ip_man\n $vm_network_name $vm_network_ip_man\n $vm_compute1_name $vm_compute1_ip_man\" | sudo tee /etc/hosts"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
+"echo -e \"$vm_controller_name $vm_controller_ip_man\n $vm_network_name $vm_network_ip_man\n $vm_compute1_name $vm_compute1_ip_man\" | sudo tee /etc/hosts"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_ext \
+"echo \"HOSTNAME=$vm_controller_name\" | sudo tee /etc/sysconfig/network"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"echo \"HOSTNAME=$vm_network_name\" | sudo tee /etc/sysconfig/network"
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
+"echo \"HOSTNAME=$vm_compute1_name\" | sudo tee /etc/sysconfig/network"
+
 ok
 
 # Shutdown for offline config
@@ -838,6 +866,8 @@ log "Edit answers file according to our configuration: vms ips, ntp servers, etc
 
 #ssh -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 #"openstack-config --set $ANSWERS_FILE general CONFIG_SSH_KEY /home/$vm_user/.ssh/id_rsa.pub"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"openstack-config --set $ANSWERS_FILE general CONFIG_CONTROLLER_HOST $vm_controller_ip_man"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "openstack-config --set $ANSWERS_FILE general CONFIG_COMPUTE_HOSTS $vm_compute1_ip_man"
