@@ -866,8 +866,9 @@ log "Edit answers file according to our configuration: vms ips, ntp servers, etc
 
 #ssh -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 #"openstack-config --set $ANSWERS_FILE general CONFIG_SSH_KEY /home/$vm_user/.ssh/id_rsa.pub"
+
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"openstack-config --set $ANSWERS_FILE general CONFIG_CONTROLLER_HOST $vm_controller_ip_man"
+"sed -i \"s|$vm_controller_ip_ext|$vm_controller_ip_man|\" $ANSWERS_FILE"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "openstack-config --set $ANSWERS_FILE general CONFIG_COMPUTE_HOSTS $vm_compute1_ip_man"
@@ -890,8 +891,8 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "openstack-config --set $ANSWERS_FILE general CONFIG_PROVISION_DEMO n"
 
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-#"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF eth1"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF ${vm_compute1_ip_man}_eth1,${vm_network_ip_man}_eth2"
 
 ok
 
@@ -941,6 +942,10 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "sudo yum -y update" 
 
 ok
+
+#OVS bridge configuration - network node - external network
+
+
 
 # Reboot vms
 log "Performing recommended reboot after packstack install.. "
@@ -1050,13 +1055,13 @@ ok
 # Register Openstack in Rally
 log "Register the Openstack deployment in Rally.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=vorbe'" 
+"sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=orbit'" 
 ok
 
 # Use Deployment
 log "Register the Openstack deployment in Rally.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"rally deployment use vorbe"
+"rally deployment use orbit"
 ok
 
 # Deployment Check
