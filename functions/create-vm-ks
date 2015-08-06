@@ -18,6 +18,8 @@ function create_vm {
   mac1=$9
   net2=${10}
   mac2=${11}
+  net3=${12}
+  mac3=${13}
 
   virt-install \
   --connect $connect_uri \
@@ -31,6 +33,7 @@ function create_vm {
   --extra-args="ks=file:/$kickstart text console=tty0 utf8 console=ttyS0,115200" \
   --network network=$net1,mac=$mac1 \
   --network network=$net2,mac=$mac2 \
+  --network network=$net3,mac=$mac3 \
   --os-type linux \
   --os-variant virtio26 \
   --force \

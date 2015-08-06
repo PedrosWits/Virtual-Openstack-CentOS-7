@@ -9,10 +9,11 @@
 # 5. DNS (optional)
 
 name=$1
-ip=$2
-netmask=$3
-gateway=$4
-dns=$5
+mac=$2
+ip=$3
+netmask=$4
+gateway=$5
+dns=$6
 
 ifile="/etc/sysconfig/network-scripts/ifcfg-$name"
 
@@ -23,11 +24,7 @@ else
 fi
 
 # Write HWADDR as seen in sys class file
-echo "HWADDR=" | 
-cat - /sys/class/net/$name/address | 
-tr -d '\n' | 
-sed 'a\' |
-tee --append $ifile
+echo "HWADDR=$mac" | tee --append $ifile
 
 # Bootproto
 echo "BOOTPROTO=none" | tee --append $ifile
@@ -42,7 +39,7 @@ echo "UUID=\"$(uuidgen)\"" | tee --append $ifile
 echo "TYPE=ETHERNET" | tee --append $ifile
 
 # NAME
-echo "NAME=\"$name\"" | tee --append $ifile
+echo "DEVICE=$name" | tee --append $ifile
 
 # IPADDR
 echo "IPADDR=$ip" | tee --append $ifile

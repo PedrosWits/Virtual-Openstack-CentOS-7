@@ -14,19 +14,20 @@ function clone_vm {
   new_name=$2
   mac=$3
   mac2=$4
+  mac3=$5
 
-  if [ -z $5 ]
+  if [ -z $6 ]
     then
       kvm_uri="qemu:///system"
     else
-      kvm_uri=$5
+      kvm_uri=$6
   fi
 
-  if [ -z $6 ]
+  if [ -z $7 ]
     then 
       disk_path="/var/lib/libvirt/images"
     else
-     disk_path=$6
+     disk_path=$7
   fi
 
   virt-clone \
@@ -36,6 +37,7 @@ function clone_vm {
     --name $new_name \
     --mac $mac \
     --mac $mac2 \
+    --mac $mac3 \
     --file $disk_path/$new_name.img
 
 }

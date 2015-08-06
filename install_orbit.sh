@@ -156,9 +156,7 @@ fi
 #======================================================================
 log "Sanity check.. "
 
-declare -a my_files=("scripts/config-iface.sh" "scripts/set-ntp-dcc.sh" "templates/isolated-network.xml"
-"templates/nat-network.xml" "templates/orbit-centos7.ks" "functions/add-net-interface" "functions/clone-vm"
-"functions/delete-kvm-network" "functions/delete-vm" "functions/macgen-kvm" "functions/remove-net-interface")
+declare -a my_files=("scripts/reorder-ifaces.sh" "scripts/config-ovs-bridge.sh" "scripts/config-ovs-port.sh" "scripts/config-iface.sh" "scripts/set-ntp-dcc.sh" "templates/isolated-network.xml" "templates/nat-network.xml" "templates/orbit-centos7.ks" "functions/add-net-interface" "functions/clone-vm" "functions/delete-kvm-network" "functions/delete-vm" "functions/macgen-kvm" "functions/remove-net-interface")
 
 for i in "${my_files[@]}"
 do
@@ -179,6 +177,9 @@ log "Load functions and templates.. "
 
  script_iface="$(pwd -P)/scripts/config-iface.sh"
  script_ntp="$(pwd -P)/scripts/set-ntp-dcc.sh"
+ script_ovs_bridge="$(pwd -P)/scripts/config-ovs-bridge.sh"
+ script_ovs_port="$(pwd -P)/scripts/config-ovs-port.sh"
+ script_reorder_ifaces="$(pwd -P)/scripts/reorder-ifaces.sh"
 ok
 
 ##======================================================================
@@ -313,6 +314,7 @@ ok
 log "Generate MACs.. "
 mac_controller_management=$(gen_mac)
 mac_controller_external=$(gen_mac)
+mac_controller_dummy=$(gen_mac)
 mac_network_management=$(gen_mac)
 mac_network_data=$(gen_mac)
 mac_network_external=$(gen_mac)
@@ -440,8 +442,11 @@ if [ $SKIP_VM_CREATION -eq 0 ]; then
 	# Create vm
 	log "Creating base vm - this may take a while... "
 	create_vm $vm_base_name $vm_base_size $vm_base_ram $vm_base_vcpus $tmp_kickstart_file \
-		  $kvm_uri $img_disk_path $ext_network_name $(gen_mac) $management_network_name $(gen_mac)
-	ok
+		  $kvm_uri $img_disk_path \
+		  $management_network_name $(gen_mac) \
+		  $data_network_name $(gen_mac) \
+		  $ext_network_name $(gen_mac)	
+        ok
 
 	# Snapshot
 	log "$vm_base_name - Create snapshot fresh install.. "
@@ -452,7 +457,7 @@ if [ $SKIP_VM_CREATION -eq 0 ]; then
 	# Prep Clone
 	log "Prepare base VM for cloning - virt-sysprep.. "
 	sudo virt-sysprep -c $kvm_uri -d $vm_base_name \
-	--firstboot-command "echo 'HWADDR=' | cat - /sys/class/net/eth0/address | tr -d '\n' | sed 'a\' >> /etc/sysconfig/network-scripts/ifcfg-eth0"
+	--firstboot-command "echo 'HWADDR=' | cat - /sys/class/net/eth2/address | tr -d '\n' | sed 'a\' >> /etc/sysconfig/network-scripts/ifcfg-eth2"
 	ok
 fi
 
@@ -461,20 +466,20 @@ fi
 
 ## Into Controller
 log "Cloning base vm into controller vm.. "
-clone_vm $vm_base_name $vm_controller_name $mac_controller_external $mac_controller_management \
-$kvm_uri $img_disk_path 
+clone_vm $vm_base_name $vm_controller_name $mac_controller_management $mac_controller_dummy \
+$mac_controller_external $kvm_uri $img_disk_path 
 ok
 
 ## Into Network
 log "Cloning base vm into network vm.. "
-clone_vm $vm_base_name $vm_network_name $mac_network_external $mac_network_management \
-$kvm_uri $img_disk_path 
+clone_vm $vm_base_name $vm_network_name $mac_network_management $mac_network_data \
+$mac_network_external $kvm_uri $img_disk_path 
 ok
 
 ## Into Compute1
 log "Cloning base vm into compute1 vm.. "
-clone_vm $vm_base_name $vm_compute1_name $mac_compute1_dummy $mac_compute1_management \
-$kvm_uri $img_disk_path 
+clone_vm $vm_base_name $vm_compute1_name $mac_compute1_management $mac_compute1_data \
+$mac_compute1_dummy $kvm_uri $img_disk_path 
 ok
 
 # Start Domains
@@ -485,8 +490,8 @@ virsh -c $kvm_uri start $vm_compute1_name
 ok
 
 # Wait for Domains to start - 10 seconds
-log "Waiting 30 seconds for vms to start and perform first-boot script safely.."
-sleep 30
+log "Waiting 50 seconds for vms to start and perform first-boot script safely.."
+sleep 50
 ok
 
 # Shutdown
@@ -495,28 +500,28 @@ virsh -c $kvm_uri shutdown $vm_controller_name
 virsh -c $kvm_uri shutdown $vm_network_name 
 virsh -c $kvm_uri shutdown $vm_compute1_name 
 ok
-
+#
 log "Waiting 30 seconds for vms to shutdown safely.."
 sleep 30
 ok
-
-# Add NICS of data network to network and compute1
-log "Adding network-interfaces for $data_network_name network in network and compute1 nodes.."
-
-## Add NIC 3 to network node - data
-add_interface $vm_network_name $data_network_name $mac_network_data $kvm_uri 
-## Add NIC 2 to compute1 node - data
-add_interface $vm_compute1_name $data_network_name $mac_compute1_data $kvm_uri 
-
-ok
-
+#
+## Add NICS of data network to network and compute1
+##log "Adding network-interfaces for $data_network_name network in network and compute1 nodes.."
+#
+### Add NIC 3 to network node - data
+##add_interface $vm_network_name $data_network_name $mac_network_data $kvm_uri 
+### Add NIC 2 to compute1 node - data
+##add_interface $vm_compute1_name $data_network_name $mac_compute1_data $kvm_uri 
+#
+##ok
+#
 # Start Domains
 log "Re-starting the VMs.. "
 virsh -c $kvm_uri start $vm_controller_name 
 virsh -c $kvm_uri start $vm_network_name 
 virsh -c $kvm_uri start $vm_compute1_name 
 ok
-
+#
 # Wait for Domains to start - 10 seconds
 log "Waiting 30 seconds for vms to start safely.."
 sleep 30
@@ -535,7 +540,8 @@ ok
 
 log "Generate ssh key for accessing the VMs automatically.. "
 if [ -f ~/.ssh/$ssh_key_name ]; then
-  log "\nA ssh key with the name '$ssh_key_name' already exists. Using the existing one.. "
+  echo "" | tee --append $log_file
+  log "A ssh key with the name '$ssh_key_name' already exists. Using the existing one.. "
 else
   ssh-keygen -t rsa -N "" -f ~/.ssh/$ssh_key_name 
 fi
@@ -607,55 +613,47 @@ ok
 log "Configure interfaces. Controller node.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_ext \
-"sudo bash -s" < $script_iface eth0 $vm_controller_ip_ext $ext_network_netmask $ext_network_ip $ext_network_ip
+"sudo bash -s" < $script_iface eth1 $mac_controller_external $vm_controller_ip_ext $ext_network_netmask $ext_network_ip $ext_network_ip
 echo ""
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_ext \
-"sudo bash -s" < $script_iface eth1 $vm_controller_ip_man $management_network_netmask
+"sudo bash -s" < $script_iface eth0 $mac_controller_management $vm_controller_ip_man $management_network_netmask
 ok
 
 log "Configure interfaces. Network node.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo bash -s" < $script_iface eth0 $vm_network_ip_ext $ext_network_netmask $ext_network_ip $ext_network_ip
+"sudo bash -s" < $script_iface eth2 $mac_network_external $vm_network_ip_ext $ext_network_netmask $ext_network_ip $ext_network_ip
 echo ""
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo bash -s" < $script_iface eth1 $vm_network_ip_man $management_network_netmask
+"sudo bash -s" < $script_iface eth0 $mac_network_management $vm_network_ip_man $management_network_netmask
 echo ""
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo bash -s" < $script_iface eth2 $vm_network_ip_tun $data_network_netmask
+"sudo bash -s" < $script_iface eth1 $mac_network_data $vm_network_ip_tun $data_network_netmask
 
 ok
 
 log "Configure interfaces. Compute1 node.. "
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
-"sudo bash -s" < $script_iface eth0 $vm_compute1_ip_man $management_network_netmask $vm_network_ip_man $ext_network_ip
+"sudo bash -s" < $script_iface eth0 $mac_compute1_management $vm_compute1_ip_man $management_network_netmask $vm_network_ip_man $ext_network_ip
 echo ""
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
-"sudo bash -s" < $script_iface eth1 $vm_compute1_ip_tun $data_network_netmask
+"sudo bash -s" < $script_iface eth1 $mac_compute1_data $vm_compute1_ip_tun $data_network_netmask
 
-#Fix HWADDR in eth0 and eth1 (because, at the moment, eth0 is ext, eth1 is man and eth2 is tun networks)
-#Thus ifcfg-eth0 writes the mac of the ext nic instead of the man nic
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
-"sudo sed -i \"s|HWADDR=.*|HWADDR=$mac_compute1_management|\" /etc/sysconfig/network-scripts/ifcfg-eth0"
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
-"sudo sed -i \"s|HWADDR=.*|HWADDR=$mac_compute1_data|\" /etc/sysconfig/network-scripts/ifcfg-eth1"
 ok
 
 log "Configure iptables on the Network node.. "
 
-# eth1 is the interface on the network node for the management network
-# eth0 is the interface on the network node for the external network
+# eth0 is the interface on the network node for the management network 
+# eth2 is the interface on the network node for the external network
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo iptables -I INPUT 5 -i eth1 -s $management_network_ip/$management_network_netmask -j ACCEPT"
+"sudo iptables -I INPUT 5 -i eth0 -s $management_network_ip/$management_network_netmask -j ACCEPT"
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo iptables -I FORWARD 1 -i eth1 -o eth0 -s $management_network_ip/$management_network_netmask -j ACCEPT"
+"sudo iptables -I FORWARD 1 -i eth0 -o eth2 -s $management_network_ip/$management_network_netmask -j ACCEPT"
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo iptables -I FORWARD 2 -i eth0 -o eth1 -m state --state ESTABLISHED,RELATED -j ACCEPT"
+"sudo iptables -I FORWARD 2 -i eth2 -o eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT"
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"sudo iptables -t nat -I POSTROUTING 1 -o eth0 -j MASQUERADE"
+"sudo iptables -t nat -I POSTROUTING 1 -o eth2 -j MASQUERADE"
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
 "sudo service iptables save"
 
@@ -679,13 +677,13 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
 "echo -e \"$vm_controller_name $vm_controller_ip_man\n $vm_network_name $vm_network_ip_man\n $vm_compute1_name $vm_compute1_ip_man\" | sudo tee /etc/hosts"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_ext \
-"echo \"HOSTNAME=$vm_controller_name\" | sudo tee /etc/sysconfig/network"
+"sudo hostnamectl --static set-hostname $vm_controller_name"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
-"echo \"HOSTNAME=$vm_network_name\" | sudo tee /etc/sysconfig/network"
+"sudo hostnamectl --static set-hostname $vm_network_name"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_ext \
-"echo \"HOSTNAME=$vm_compute1_name\" | sudo tee /etc/sysconfig/network"
+"sudo hostnamectl --static set-hostname $vm_compute1_name"
 
 ok
 
@@ -704,6 +702,7 @@ ok
 ## Remove NIC 1 from compute1 node - external
 log "Remove external network interface from Compute1 node.. "
 remove_interface $vm_compute1_name $mac_compute1_dummy $kvm_uri
+remove_interface $vm_controller_name $mac_controller_dummy $kvm_uri
 ok
 
 # Start Domains
@@ -713,7 +712,7 @@ virsh -c $kvm_uri start $vm_network_name
 virsh -c $kvm_uri start $vm_compute1_name 
 ok
 
-# Wait for Domains to start - 10 seconds
+# Wait for Domains to start - 50 seconds
 log "Waiting 50 seconds for vms to start safely.."
 sleep 50
 ok
@@ -766,7 +765,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
 "ping -c 2 www.google.com" 
 
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_compute1_ip_man \
 "ping -c 2 www.google.com" 
 
 ok
@@ -784,10 +783,6 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "net_config" "Centos 7 Co
 --atomic --reuse-external 
 
 ok
-
-# Set hostname
-
-# Set known hosts
 
 # Configure ntp in openstack vms, controller - master, rest - slaves
 ##Controller
@@ -892,7 +887,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "openstack-config --set $ANSWERS_FILE general CONFIG_PROVISION_DEMO n"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF ${vm_compute1_ip_man}_eth1,${vm_network_ip_man}_eth2"
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_TUNNEL_IF eth1"
 
 ok
 
@@ -944,8 +939,11 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 ok
 
 #OVS bridge configuration - network node - external network
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+"sudo bash -s" < ${script_ovs_bridge} br-ex ${vm_network_ip_ext} ${ext_network_netmask} ${ext_network_ip} ${ext_network_ip}
 
-
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+"sudo bash -s" < ${script_ovs_port} eth2 br-ex
 
 # Reboot vms
 log "Performing recommended reboot after packstack install.. "
@@ -955,8 +953,8 @@ virsh -c $kvm_uri reboot $vm_compute1_name
 ok
 
 # Wait for Domains to start - 30 seconds
-log "Waiting 50 seconds for safe reboot.."
-sleep 50
+log "Waiting 90 seconds for safe reboot.."
+sleep 90
 ok
 
 ## Create snapshots
@@ -973,57 +971,6 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_openstack_install" "C
 
 ok
 
-#4.b - OVS configuration on network-node
-
-#log "Configure interface eth2 on the Network VM as a OVS-port.. "
-
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"sudo truncate -s 0 /etc/sysconfig/network-scripts/ifcfg-eth2" 
-
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'DEVICE=\"eth2\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'ONBOOT=\"yes\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'TYPE=\"OVSPort\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'DEVICETYPE=\"ovs\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'OVS_BRIDGE=br-ex' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'BOOTPROTO=\"none\"' | sudo tee --append /etc/sysconfig/network-scripts/ifcfg-eth2"
-#ok
-
-#log "Configure interface br-ex on the Network VM as a OVS-bridge.. "
-#
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'DEVICE=\"br-ex\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'BOOTPROTO=\"none\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'IPADDR=\"$vm_network_ip_eth2\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'NETMASK=\"$ext_network_netmask\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'GATEWAY=\"$ext_network_ip\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'TYPE=\"OVSIntPort\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'OVS_BRIDGE=\"br-ex\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'DEVICETYPE=\"ovs\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'DEFROUTE=\"yes\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"echo 'DNS1=\"$ext_network_ip\"' | tee --append /etc/sysconfig/network-scripts/ifcfg-br-ex"
-
-#ok
-
-# last: service network restart
-#log "Restart the network service on the Network VM.. "
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-#"sudo service network restart"
-#ok
 #======================================================================
 #
 # 5. Install Rally and gather benchmarking data
@@ -1096,7 +1043,7 @@ ok
 # Add keystonerc file to bashrc so it is executed on every ssh call
 log "Source the rc admin file - sets the required environment variables.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"echo 'source ~/keystonerc_$vm_user' >> .bashrc"
+"sudo install -m 600 -o ${vm_user} -g ${vm_user} /root/keystonerc_${vm_user} /home/${vm_user}/; echo 'source ~/keystonerc_$vm_user' >> .bashrc"
 ok
 
 # Create a cirros disk image with glance using online link resource
