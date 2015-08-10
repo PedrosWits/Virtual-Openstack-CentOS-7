@@ -939,12 +939,24 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 ok
 
 #OVS bridge configuration - network node - external network
+log "OVS external bridge configuration through br-ex - fixing iptables accordingly.. "
+
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
 "sudo bash -s" < ${script_ovs_bridge} br-ex ${vm_network_ip_ext} ${ext_network_netmask} ${ext_network_ip} ${ext_network_ip}
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
 "sudo bash -s" < ${script_ovs_port} eth2 br-ex
 
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo iptables -I FORWARD 1 -i eth0 -o br-ex -s $management_network_ip/$management_network_netmask -j ACCEPT"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo iptables -I FORWARD 2 -i br-ex -o eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo iptables -t nat -I POSTROUTING 1 -o br-ex -j MASQUERADE"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo service iptables save"
+
+ok
 # Reboot vms
 log "Performing recommended reboot after packstack install.. "
 virsh -c $kvm_uri reboot $vm_controller_name 
