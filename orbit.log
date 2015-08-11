@@ -1,7 +1,7 @@
 
 [0;36m[orbit][0m Load variables from user-editable file - /home/psilva/openstack-orbit/orbit.conf.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Save input configuration file in: /home/psilva/openstack-orbit/orbit.pedros..[0;32m[ OK ][0m
-orbit: A Virtual Openstack RedHat-based Environment starting on Sex Jul 17 00:22:32 WEST 2015
+orbit: A Virtual Openstack RedHat-based Environment starting on Ter Ago 11 15:55:19 WEST 2015
 [0;36m[orbit][0m Sanity check.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Load functions and templates.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Check if virtualization is enabled.. [0;32m[ OK ][0m
@@ -56,11 +56,13 @@ orbit: A Virtual Openstack RedHat-based Environment starting on Sex Jul 17 00:22
 [0;36m[orbit][0m Edit answers file according to our configuration: vms ips, ntp servers, etc.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Install ssh key in root users, for automating required priveleged packstack installation.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Running packstack with configured values - this may take a while.. [0;32m[ OK ][0m
+[0;36m[orbit][0m OVS external bridge configuration through br-ex - fixing iptables accordingly.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Performing recommended reboot after packstack install.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Waiting 90 seconds for safe reboot..[0;32m[ OK ][0m
 [0;36m[orbit][0m Take snapshots of VMs after successful openstack install.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Install Rally - dependencies.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Install Rally - download installation script.. [0;32m[ OK ][0m
+[0;36m[orbit][0m Fix a problem with Rally installation script.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Install Rally - run installation script - this may take a while.. [0;31m[ FAILED ][0m
 [0;36m[orbit][0m [0;31mInstallation unsuccessful![0m Cleaning up..
-[0;36m[orbit][0m Elapsed Time: 31m 38s
+[0;36m[orbit][0m Elapsed Time: 35m 42s

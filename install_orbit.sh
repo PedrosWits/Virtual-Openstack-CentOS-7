@@ -882,6 +882,12 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_ML2_VNI_RANGES 1001:2000"
+#IMPORTANTE SENAO CONFIG DE REDE NAO FUNCIONA
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_IFACES br-eth1:eth1"
+# IMPORTANTE SENAO CONFIG DE REDE NAO FUNCIONA
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"openstack-config --set $ANSWERS_FILE general CONFIG_NEUTRON_OVS_BRIDGE_MAPPINGS physnet1:br-eth1"
 
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "openstack-config --set $ANSWERS_FILE general CONFIG_PROVISION_DEMO n"
@@ -998,6 +1004,14 @@ ok
 log "Install Rally - download installation script.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "curl https://raw.githubusercontent.com/openstack/rally/master/install_rally.sh > ~/install_rally.sh && chmod +x ~/install_rally.sh" 
+ok
+
+# Install ez_setup.py to fix a rally installation problem based on pip egg
+log "Fix a problem with Rally installation script.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"curl https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py > ~/ez_setup.py && chmod +x ~/ez_setup.py" 
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"sudo python ~/ez_setup.py" 
 ok
 
 log "Install Rally - run installation script - this may take a while.. "
