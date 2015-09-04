@@ -273,7 +273,7 @@ function cleanup {
 #======================================================================
 
 # Define trap
-trap cleanup EXIT SIGHUP SIGINT SIGTERM
+trap cleanup EXIT SIGHUP SIGINT SIGTERM SIGQUIT
 
 ##======================================================================
 #
@@ -295,6 +295,12 @@ if [ $CLEAN -eq 1 ]; then
     exit 1
 fi
 
+# DEBUG ONLY - UNCOMMENT BELOW FROM HERE TO
+#RUN_ONLY_TEST_CASE=1
+
+#if [ $RUN_ONLY_TEST_CASE -eq 0 ]; then
+
+# DEBUG ONLY - HERE
 #=====================================================================
 #
 # 1. Libvirt
@@ -504,17 +510,7 @@ ok
 log "Waiting 30 seconds for vms to shutdown safely.."
 sleep 30
 ok
-#
-## Add NICS of data network to network and compute1
-##log "Adding network-interfaces for $data_network_name network in network and compute1 nodes.."
-#
-### Add NIC 3 to network node - data
-##add_interface $vm_network_name $data_network_name $mac_network_data $kvm_uri 
-### Add NIC 2 to compute1 node - data
-##add_interface $vm_compute1_name $data_network_name $mac_compute1_data $kvm_uri 
-#
-##ok
-#
+
 # Start Domains
 log "Re-starting the VMs.. "
 virsh -c $kvm_uri start $vm_controller_name 
@@ -989,6 +985,198 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_openstack_install" "C
 
 ok
 
+# DEBUG ONLY - UNCOMMENT LINE BELOW
+# fi
+checkpoint=5
+#======================================================================
+#
+# 4b. Main Test Use case:
+#    Create image, boot instance and ssh into it
+#
+#======================================================================
+
+# Add keystonerc file to bashrc so it is executed on every ssh call
+log "Source the rc admin file - sets the required environment variables.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"sudo install -m 600 -o ${vm_user} -g ${vm_user} /root/keystonerc_${vm_user} /home/${vm_user}/; echo 'source ~/keystonerc_$vm_user' >> .bashrc"
+ok
+
+# Create a cirros disk image with glance using online link resource
+log "Create Cirros image from link.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"glance image-create \
+--copy-from http://download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img \
+--is-public true \
+--container-format bare \
+--disk-format qcow2 \
+--name cirros33"
+ok
+
+# Add a tinier flavor
+log "Add nano image flavor to nova for test purposes.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"nova flavor-create m1.nano auto 128 1 1"
+ok
+
+# Ssh key for nova demo server 
+log "Create keypair and add it to nova.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"ssh-keygen -t rsa -N \"\" -f id_rsa_demo; nova keypair-add --pub-key id_rsa_demo.pub demo"
+ok
+
+# Create security-groups
+log "Create security-group default rules for icmp and ssh tcp traffic.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron security-group-rule-create --protocol icmp default; \
+ neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 default"
+ok
+
+# NETWORKING
+# Create external network
+log "Create the external network.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron net-create external_network --router:external"
+ok
+# Subnet
+log "Create external_subnet.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron subnet-create --name external_subnet --disable-dhcp external_network $floating_network"
+ok
+
+# Router to external network
+log "Create router to external_network.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron router-create router_ext; neutron router-gateway-set router_ext external_network"
+ok
+
+# Create private network 
+log "Create private network.. "
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron net-create private_network 2>&1 | tee private-network.txt"
+
+priv_net_id=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"cat private-network.txt | grep -o ' id .*' | tr -s ' ' | cut -f4 -d' '")
+
+ok
+
+# Create private subnet
+log "Create private sub-network.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron subnet-create --name private_subnet private_network $test_tenant_network"
+ok
+
+# Add router interface
+log "Add private subnet interface to router.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"neutron router-interface-add router_ext private_subnet"
+ok
+
+# BOOT server
+log "Boot the demo server with the previously defined configurations.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"nova boot --poll --flavor m1.nano --image cirros33 --nic net-id=$priv_net_id --key-name demo test_server"
+ok
+
+# Get test server private ip number
+log "Get the test server private ip.. "
+test_private_ip=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"nova show test_server | grep private_network | tr -s ' ' | cut -f5 -d' '")
+ok
+
+# Reboot test_server
+log "Reboot the test server.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"nova reboot test_server"
+ok
+
+
+# sleep? wait for instance to boot? while cycle? max-tries=3; sleep=60s
+log "Retrieving network namespace.. "
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+"/usr/sbin/ip netns | grep dhcp | tee dhcp_namespace.txt"
+
+dhcp_namespace=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man "cat dhcp_namespace.txt")
+
+ok
+
+log "Waiting for test instance to boot. Ping instace through network namespace to test correct configuration and availability.. "
+for i in 1 2 3; do
+  echo "Sleeping for 60 seconds"
+  sleep 60
+  echo "Pinging instance.. "
+  ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+  "sudo /usr/sbin/ip netns exec ${dhcp_namespace} ping -c 4 $test_private_ip" && break || true && echo "Failed, trying again..";
+done
+ok
+
+# Create a floating ip
+log "Create a floating ip for inbound access to test_server.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"nova floating-ip-create external_network 2>&1 | tee test_server.floating-ip"
+demo_floating_ip=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"cat test_server.floating-ip | grep -o '.* external_network' | cut -f4 -d' '")
+ok
+
+# Add floating ip to test a floating ip
+log "Associate the floating ip with the test server instance.. "
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"nova add-floating-ip test_server $demo_floating_ip"
+ok
+
+# Add ip addr   
+log "Configure network node to allow external traffic coming from and into the instance.. "
+
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+"sudo /usr/sbin/ip addr add $floating_network dev br-ex"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo iptables -I FORWARD 1 -s $floating_network -j ACCEPT"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo iptables -I FORWARD 1 -d $floating_network -j ACCEPT"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo iptables -t nat -I POSTROUTING 1 -s $floating_network -j MASQUERADE"
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_ext \
+"sudo service iptables save"
+
+ok
+
+# Final couple of tests: icmp + ssh
+log "Check if the test server is reachable by its floating ip: with icmp.. "
+  ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+  "ping -c 4 $demo_floating_ip"
+ok
+
+log "Check if the test server is reachable by its floating ip: with ssh.. "
+ private_demo_key=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+ "cat ~/id_rsa_demo")
+ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+ "echo \"$private_demo_key\" > ~/id_rsa_demo; chmod 600 ~/id_rsa_demo"
+ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+ "ssh-keyscan -t rsa,dsa $demo_floating_ip >> ~/.ssh/known_hosts"
+ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+ "ssh -i ~/id_rsa_demo cirros@$demo_floating_ip \"echo Im alive at last - cirros instance\""
+ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+ "ssh -i ~/id_rsa_demo cirros@$demo_floating_ip \"echo Can I ping google?; ping -c 4 8.8.8.8\""
+
+ok
+
+## Create snapshots
+log "Take snapshots of VMs after successful Openstack testing.. "
+
+virsh -c $kvm_uri snapshot-create-as $vm_controller_name "ok_basic_test" "Centos 7 Controller VM successful configuration / basic test case" \
+--atomic --reuse-external 
+
+virsh -c $kvm_uri snapshot-create-as $vm_network_name "ok_basic_test" "Centos 7 Network VM successful configuration/ basic test case" \
+ --atomic --reuse-external 
+
+virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_basic_test" "Centos 7 Compute1 VM successful configuration / basic test case" \
+--atomic --reuse-external 
+
+ok
+
+checkpoint=6
+
 #======================================================================
 #
 # 5. Install Rally and gather benchmarking data
@@ -998,7 +1186,7 @@ ok
 # Install Dependencies
 log "Install Rally - dependencies.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"sudo yum -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git" 
+"sudo yum -y install gcc libffi-devel openssl-devel gmp-devel libxml2-devel libxslt-devel postgresql-devel git python-pip"  
 ok
 # Install Rally
 log "Install Rally - download installation script.. "
@@ -1058,119 +1246,4 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_rally_install" "Cento
 --atomic --reuse-external 
 
 ok
-
-#======================================================================
-#
-# 6. Main Test Use case:
-#    Configure external network, create image, boot instance and ssh into it
-#
-#======================================================================
-
-# Add keystonerc file to bashrc so it is executed on every ssh call
-log "Source the rc admin file - sets the required environment variables.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"sudo install -m 600 -o ${vm_user} -g ${vm_user} /root/keystonerc_${vm_user} /home/${vm_user}/; echo 'source ~/keystonerc_$vm_user' >> .bashrc"
-ok
-
-# Create a cirros disk image with glance using online link resource
-log "Create Cirros image from link.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"glance image-create \
---copy-from http://download.cirros-cloud.net/0.3.3/cirros-0.3.3-x86_64-disk.img \
---is-public true \
---container-format bare \
---disk-format qcow2 \
---name cirros33"
-ok
-
-# Add a tinier flavor
-log "Add nano image flavor to nova for test purposes.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"nova flavor-create m1.nano auto 128 1 1"
-ok
-
-# Ssh key for nova demo server 
-log "Create keypair and add it to nova.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"ssh-keygen -t rsa -N \"\" -f id_rsa_demo; nova keypair-add --pub-key id_rsa_demo.pub demo"
-ok
-
-# Create security-groups
-log "Create security-group default rules for icmp and ssh tcp traffic.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron security-group-rule-create --protocol icmp default; \
- neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 default"
-ok
-
-# NETWORKING
-# Create external network
-log "Create the external network.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron net-create external_network --router:external"
-ok
-# Subnet
-log "Create external_subnet.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron subnet-create --name external_subnet --disable-dhcp external_network 172.16.16.0/24"
-ok
-
-# Router to external network
-log "Create router to external_network.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron router-create router_ext; neutron router-gateway-set router_ext external_network"
-ok
-
-# Create private network 
-log "Create private network.. "
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron net-create private_network 2>&1 | tee private-network.txt"
-
-priv_net_id=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"cat private-network.txt | grep -o ' id .*' | tr -s ' ' | cut -f4 -d' '")
-
-ok
-
-# Create private subnet
-log "Create private sub-network.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron subnet-create --name private_subnet private_network 192.168.1.0/24"
-ok
-
-# Add router interface
-log "Create private sub-network.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"neutron router-interface-add router_ext private_subnet"
-ok
-
-# BOOT server
-log "Boot the demo server with the previously defined configurations.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"nova boot --poll --flavor m1.nano --image cirros33 --nic net-id=$priv_net_id --key-name demo test_server"
-ok
-
-# Create a floating ip
-log "Create a floating ip for inbound access to test_server.. "
-
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"nova floating-ip-create external_network 2>&1 | tee test_server.floating-ip"
-
-demo_floating_ip=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"cat test_server.floating-ip | grep -o '.* external_network' | cut -f4 -d' '")
-
-ok
-
-# Add floating ip to test a floating ip
-log "Associate the floating ip with the test server instance.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"nova add-floating-ip test_server $demo_floating_ip"
-ok
-
-# Create a floating ip
-#log ""
-#ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-#""
-#ok
-
-log "Now we need to test if the test_server is reachable by its floating ip.. "
-echo "[ ? ]"
+checkpoint=7
