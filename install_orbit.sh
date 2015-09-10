@@ -156,7 +156,22 @@ fi
 #======================================================================
 log "Sanity check.. "
 
-declare -a my_files=("scripts/reorder-ifaces.sh" "scripts/config-ovs-bridge.sh" "scripts/config-ovs-port.sh" "scripts/config-iface.sh" "scripts/set-ntp-dcc.sh" "templates/isolated-network.xml" "templates/nat-network.xml" "templates/orbit-centos7.ks" "functions/add-net-interface" "functions/clone-vm" "functions/delete-kvm-network" "functions/delete-vm" "functions/macgen-kvm" "functions/remove-net-interface")
+declare -a my_files=( \
+"scripts/reorder-ifaces.sh" \
+"scripts/config-ovs-bridge.sh" \
+"scripts/config-ovs-port.sh" \
+"scripts/config-iface.sh" \
+"scripts/set-ntp-dcc.sh" \
+"templates/isolated-network.xml" \
+"templates/nat-network.xml" \
+"templates/orbit-centos7.ks" \
+"functions/add-net-interface" \
+"functions/clone-vm" \
+"functions/delete-kvm-network" \
+"functions/delete-vm" \
+"functions/macgen-kvm" \
+"functions/remove-net-interface" \
+"templates/rally-tasks")
 
 for i in "${my_files[@]}"
 do
@@ -986,7 +1001,7 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_openstack_install" "C
 ok
 
 # DEBUG ONLY - UNCOMMENT LINE BELOW
-# fi
+#fi
 checkpoint=5
 #======================================================================
 #
@@ -1072,6 +1087,26 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "neutron router-interface-add router_ext private_subnet"
 ok
 
+# Test if image status is available - if not sleep 30 maxtimes=5
+log "Test if glance image is available.. "
+maxtries=5
+for i in {1..$maxtries}
+do
+  status=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man "glance image-show cirros33 | grep status | tr -s \" \" | cut -f4 -d' '")
+
+  if [ "$status" != "active" ]; then
+    echo "Status is not active. Glance image cirros33 is not yet available."
+    echo "Sleeping for 30 seconds."
+    sleep 30
+    if [ $i -eq $maxtries ]; then
+      exit 1
+    fi
+  else
+    break
+  fi
+done
+ok
+
 # BOOT server
 log "Boot the demo server with the previously defined configurations.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
@@ -1084,13 +1119,6 @@ test_private_ip=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_cont
 "nova show test_server | grep private_network | tr -s ' ' | cut -f5 -d' '")
 ok
 
-# Reboot test_server
-log "Reboot the test server.. "
-ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"nova reboot test_server"
-ok
-
-
 # sleep? wait for instance to boot? while cycle? max-tries=3; sleep=60s
 log "Retrieving network namespace.. "
 
@@ -1101,13 +1129,54 @@ dhcp_namespace=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_netwo
 
 ok
 
-log "Waiting for test instance to boot. Ping instace through network namespace to test correct configuration and availability.. "
-for i in 1 2 3; do
-  echo "Sleeping for 60 seconds"
-  sleep 60
-  echo "Pinging instance.. "
-  ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
-  "sudo /usr/sbin/ip netns exec ${dhcp_namespace} ping -c 4 $test_private_ip" && break || true && echo "Failed, trying again..";
+log "Test if test-server has booted correctly.. "
+maxreboot=2
+maxtries=6
+sleep_time=45
+successful=0
+
+for i in {1..$maxreboot}
+do
+  hypervisor_host=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+  "nova show test_server | grep :host | tr -s \" \" | cut -f4 -d' '")
+  if [ "${hypervisor_host}" != "${vm_compute1_name}" ]
+     echo "For some reason the hypervisor_hostname of test_server is = ${hypervisor_host} , when it should be $vm_compute1_name"
+     # Reboot test_server
+     log "Try to fix this by rebooting the test server.. "  
+     ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+     "nova reboot test_server"
+     ok
+  fi
+  COUNTER=0
+  while [ $COUNTER -lt $maxtries ]; do
+    status=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+    "nova show test_server | grep status | tr -s \" \" | cut -f4 -d' '")
+    if [ "$status" != "ACTIVE" ]; then
+      echo "Instance status is = $status. Waiting for ACTIVE status."
+      echo "Sleeping for $sleep_time seconds."
+      sleep $sleep_time     
+    else
+      echo "Instance is ACTIVE"
+      echo "Pinging instance.. "
+      ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
+      "sudo /usr/sbin/ip netns exec ${dhcp_namespace} ping -c 4 $test_private_ip" && successful=1 && break || true
+      if [ $COUNTER -eq ${maxtries}-1 ]; then
+	 break
+      else 
+         echo "Trying again in 15 seconds"
+         sleep 15
+      fi
+    fi
+  let COUNTER=$COUNTER+1    
+  done   
+  if [ $successful -eq 1 ]; then
+    break
+  else 
+     if [ $i -eq $maxreboot ]; then
+        echo "Could not communicate with instance (icmp)."
+        exit 1
+     fi
+  fi
 done
 ok
 
@@ -1214,7 +1283,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 ok
 
 # Register Openstack in Rally
-log "Register the Openstack deployment in Rally.. "
+log "Create a rally deployment from environment.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "sudo -E bash -c 'source /root/keystonerc_admin; rally deployment create --fromenv --name=orbit'" 
 ok
@@ -1231,8 +1300,6 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 "rally deployment check" 
 ok
 
-# Run Tasks
-
 ## Create snapshots
 log "Take snapshots of VMs after successful rally install.. "
 
@@ -1247,3 +1314,40 @@ virsh -c $kvm_uri snapshot-create-as $vm_compute1_name "ok_rally_install" "Cento
 
 ok
 checkpoint=7
+
+#DEBUG ONLY - line below comment/uncomment
+#fi
+
+# Load Rally Tasks defined in templates/rally-tasks
+log "Load Rally tasks and create directory for results.. "
+source templates/rally-tasks
+report_dir="$(pwd -P)/rally_task_reports_${config_id}"
+
+if [ -d ${report_dir} ]; then
+  if ! promptyn "Directory ${report_dir} exists. Continue/Overwrite existing data?"; then
+     exit 1
+  fi
+fi
+
+mkdir -p ${report_dir} || true
+ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+"mkdir -p ~/task_reports"
+ok
+
+# Run Tasks
+log "Run Rally Tasks sequentially.. "
+
+for i in "${tasks_array[@]}"
+do
+ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+ "rally task start ${tasks_dir}/${i}"
+ 
+ task_name=$(echo "${i}" | sed -e "s|/|\n|g" | grep json | sed "s/.json//")
+ report_name="~/task_reports/report_${task_name}.html"
+ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+ "rally task report --out=${report_name}"
+ 
+ scp -i ~/.ssh/$ssh_key_name $vm_user@$vm_controller_ip_man:${report_name} ${report_dir}
+done
+
+ok

@@ -1,38 +1,9 @@
 
 [0;36m[orbit][0m Load variables from user-editable file - /home/psilva/openstack-orbit/orbit.conf.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Save input configuration file in: /home/psilva/openstack-orbit/orbit.pedros..[0;32m[ OK ][0m
-orbit: A Virtual Openstack RedHat-based Environment starting on Sex Set  4 20:05:19 WEST 2015
+orbit: A Virtual Openstack RedHat-based Environment starting on Qui Set 10 15:12:45 WEST 2015
 [0;36m[orbit][0m Sanity check.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Load functions and templates.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Source the rc admin file - sets the required environment variables.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create Cirros image from link.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Add nano image flavor to nova for test purposes.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create keypair and add it to nova.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create security-group default rules for icmp and ssh tcp traffic.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create the external network.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create external_subnet.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create router to external_network.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create private network.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create private sub-network.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Add private subnet interface to router.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Boot the demo server with the previously defined configurations.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Get the test server private ip.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Reboot the test server.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Retrieving network namespace.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Waiting for test instance to boot. Ping instace through network namespace to test correct configuration and availability.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Create a floating ip for inbound access to test_server.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Associate the floating ip with the test server instance.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Configure network node to allow external traffic coming from and into the instance.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Check if the test server is reachable by its floating ip: with icmp.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Check if the test server is reachable by its floating ip: with ssh.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Take snapshots of VMs after successful Openstack testing.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Install Rally - dependencies.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Install Rally - download installation script.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Fix a problem with Rally installation script.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Install Rally - run installation script - this may take a while.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Populate Rally's database.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Register the Openstack deployment in Rally.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Register the Openstack deployment in Rally.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Check that the current openstack deployment is healthy and ready to be benchmarked.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Take snapshots of VMs after successful rally install.. [0;32m[ OK ][0m
+[0;36m[orbit][0m Load Rally tasks and create directory for results.. [0;32m[ OK ][0m
+[0;36m[orbit][0m Run Rally Tasks sequentially.. [0;32m[ OK ][0m
 [0;36m[orbit][0m [0;32mInstallation successful![0m

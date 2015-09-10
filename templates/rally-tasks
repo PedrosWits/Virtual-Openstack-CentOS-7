@@ -1,0 +1,27 @@
+#!/bin/sh
+
+tasks_dir="/usr/share/rally/samples/tasks"
+
+declare -a tasks_array=( \
+"sla/create-and-delete-user.json" \
+"scenarios/authenticate/keystone.json" \
+)
+#"scenarios/authenticate/token_validate_neutron.json" \
+#"scenarios/authenticate/token_validate_nova.json" \
+#"scenarios/vm/boot-runcommand-delete.json" \
+#"scenarios/vm/boot-runcommand-delete-with-disk.json" \
+#"scenarios/neutron/create_and_delete_networks.json" \
+#"scenarios/neutron/create_and_list_pools.json" \
+#"scenarios/neutron/create_and_update_routers.json" \
+#"scenarios/neutron/create_and_delete_subnets.json" \
+#"scenarios/neutron/create_and_list_subnets.json" \
+#"scenarios/neutron/create_and_update_subnets.json" \
+#"scenarios/nova/boot-and-associate-floating-ip.json" \
+#"scenarios/nova/boot-and-delete-multiple.json" \
+#"scenarios/nova/boot-and-live-migrate.json" \
+#"scenarios/nova/pause-and-unpause.json" \
+#"scenarios/nova/resize-server.json" \
+#"scenarios/nova/boot-from-volume.json" \
+#"scenarios/cinder/create-and-attach-volume.json" \
+#"scenarios/cinder/create-snapshot-and-delete-snapshot" \
+#)
