@@ -8,7 +8,7 @@
 usage="Usage: install_orbit.sh [options]
    --clean [cfg-file] Clean installation (remove all traces). Parameters specified in cfg-file
    --save-base-vm     Save base vm - used for cloning any virtual node
-   --skip-base-vm     Use a saved base vm - with name specified in vorbe.cfg
+   --skip-base-vm     Use a saved base vm - with name specified in orbit.cfg
    --debug            Do not clean anything in case installation fails
    --help             Prompt usage and help information"
 
@@ -26,6 +26,10 @@ case $key in
    --clean)
 	CLEAN=1
 	clean_cfg_file=$2
+	if [ ! -f "$clean_cfg_file" ]; then
+	   echo "Specified configuration file is not valid."
+	   exit 1 
+	fi
 	shift
    ;;
    --skip-base-vm)
@@ -38,12 +42,12 @@ case $key in
         DEBUG=1
    ;;
    --help)
-	echo -e "$usage"
+	echo -e "\n${usage}\n"
 	exit 0
    ;;
    *)
 	echo "Unknown option: $key"
-	echo -e "$usage"
+	echo -e "\n${usage}\n"
 	exit 1
    ;;
 
@@ -982,8 +986,8 @@ virsh -c $kvm_uri reboot $vm_compute1_name
 ok
 
 # Wait for Domains to start - 30 seconds
-log "Waiting 90 seconds for safe reboot.."
-sleep 90
+log "Waiting 120 seconds for safe reboot.."
+sleep 120
 ok
 
 ## Create snapshots
@@ -1024,7 +1028,7 @@ ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
 --is-public true \
 --container-format bare \
 --disk-format qcow2 \
---name cirros33"
+--name cirros"
 ok
 
 # Add a tinier flavor
@@ -1090,15 +1094,16 @@ ok
 # Test if image status is available - if not sleep 30 maxtimes=5
 log "Test if glance image is available.. "
 maxtries=5
-for i in {1..$maxtries}
+for ((i=1; i<=$maxtries; i++))
 do
+  echo "# - Try number $i"
   status=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man "glance image-show cirros33 | grep status | tr -s \" \" | cut -f4 -d' '")
 
   if [ "$status" != "active" ]; then
-    echo "Status is not active. Glance image cirros33 is not yet available."
-    echo "Sleeping for 30 seconds."
+    echo "# - Status is not active. Glance image cirros33 is not yet available."
+    echo "# - Sleeping for 30 seconds."
     sleep 30
-    if [ $i -eq $maxtries ]; then
+    if [ "$i" -eq "$maxtries" ]; then
       exit 1
     fi
   else
@@ -1129,51 +1134,65 @@ dhcp_namespace=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_netwo
 
 ok
 
+#DEBUG ReAL
+#fi
+#dhcp_namespace="qdhcp-68600326-ba52-4e96-a978-91c54cf1439a"
+#test_private_ip="192.168.20.3"
+
 log "Test if test-server has booted correctly.. "
 maxreboot=2
-maxtries=6
-sleep_time=45
+maxtries=3
+sleep_time=60
 successful=0
 
-for i in {1..$maxreboot}
+for ((i=1; i<=$maxreboot; i++))
 do
+  echo "# - Try number $i"
   hypervisor_host=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
   "nova show test_server | grep :host | tr -s \" \" | cut -f4 -d' '")
-  if [ "${hypervisor_host}" != "${vm_compute1_name}" ]
-     echo "For some reason the hypervisor_hostname of test_server is = ${hypervisor_host} , when it should be $vm_compute1_name"
+  echo "# - Test Instance Hypervisor Host = $hypervisor_host"
+  if [ "${hypervisor_host}" != "${vm_compute1_name}" ]; then
+     echo "# - For some reason the hypervisor_hostname of test_server is = ${hypervisor_host} , when it should be $vm_compute1_name"
      # Reboot test_server
-     log "Try to fix this by rebooting the test server.. "  
+     log "# - Try to fix this by rebooting the test server.. "  
+     ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
+     "nova reboot test_server"
+     ok
+  elif [ "$i" -eq "$maxreboot" ]; then
+    # Reboot test_server
+     log "# - First try did not work, force test server reboot.. "  
      ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
      "nova reboot test_server"
      ok
   fi
   COUNTER=0
-  while [ $COUNTER -lt $maxtries ]; do
+  while [ "$COUNTER" -lt "$maxtries" ]; do
+    echo "# - Counter = $COUNTER"
     status=$(ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
     "nova show test_server | grep status | tr -s \" \" | cut -f4 -d' '")
     if [ "$status" != "ACTIVE" ]; then
-      echo "Instance status is = $status. Waiting for ACTIVE status."
-      echo "Sleeping for $sleep_time seconds."
+      echo "# - Instance status is = $status. Waiting for ACTIVE status."
+      echo "# - Sleeping for $sleep_time seconds."
       sleep $sleep_time     
     else
-      echo "Instance is ACTIVE"
-      echo "Pinging instance.. "
+      echo "# - Instance is ACTIVE"
+      echo "# - Pinging instance.. "
       ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_network_ip_man \
       "sudo /usr/sbin/ip netns exec ${dhcp_namespace} ping -c 4 $test_private_ip" && successful=1 && break || true
-      if [ $COUNTER -eq ${maxtries}-1 ]; then
+      if [[ $COUNTER -eq $(($maxtries-1)) ]]; then
 	 break
       else 
-         echo "Trying again in 15 seconds"
+         echo "# - Trying again in 15 seconds"
          sleep 15
       fi
     fi
   let COUNTER=$COUNTER+1    
   done   
-  if [ $successful -eq 1 ]; then
+  if [ "$successful" -eq 1 ]; then
     break
   else 
-     if [ $i -eq $maxreboot ]; then
-        echo "Could not communicate with instance (icmp)."
+     if [ "$i" -eq "$maxreboot" ]; then
+        echo "## -Could not communicate with instance (icmp). Terminating.."
         exit 1
      fi
   fi
@@ -1291,13 +1310,13 @@ ok
 # Use Deployment
 log "Register the Openstack deployment in Rally.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"rally deployment use orbit"
+"sudo rally deployment use orbit"
 ok
 
 # Deployment Check
 log "Check that the current openstack deployment is healthy and ready to be benchmarked.. "
 ssh -i ~/.ssh/$ssh_key_name -o BatchMode=yes $vm_user@$vm_controller_ip_man \
-"rally deployment check" 
+"sudo rally deployment check" 
 ok
 
 ## Create snapshots

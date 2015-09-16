@@ -1,9 +1,6 @@
 
-[0;36m[orbit][0m Load variables from user-editable file - /home/psilva/openstack-orbit/orbit.conf.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Save input configuration file in: /home/psilva/openstack-orbit/orbit.pedros..[0;32m[ OK ][0m
-orbit: A Virtual Openstack RedHat-based Environment starting on Qui Set 10 15:12:45 WEST 2015
 [0;36m[orbit][0m Sanity check.. [0;32m[ OK ][0m
 [0;36m[orbit][0m Load functions and templates.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Load Rally tasks and create directory for results.. [0;32m[ OK ][0m
-[0;36m[orbit][0m Run Rally Tasks sequentially.. [0;32m[ OK ][0m
-[0;36m[orbit][0m [0;32mInstallation successful![0m
+[0;36m[orbit][0m Cleaning up previous installation, with variables read from ''.. 
+[0;32m[ OK ][0m
+[0;36m[orbit][0m Elapsed Time: 0m 0s
